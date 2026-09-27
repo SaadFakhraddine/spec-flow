@@ -1,0 +1,6 @@
+process.env.PORT = '4000'
+process.env.MONGODB_URI = 'mongodb://127.0.0.1:27017/specflow-test'
+process.env.JWT_SECRET = 'test-access-secret-which-is-long-enough'
+process.env.JWT_REFRESH_SECRET = 'test-refresh-secret-which-is-long-enough'
+process.env.FRONTEND_URL = 'http://localhost:5173'
+process.env.NODE_ENV = 'test'

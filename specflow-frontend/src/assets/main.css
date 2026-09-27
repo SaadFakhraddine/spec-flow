@@ -1,0 +1,41 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    @apply bg-background font-sans text-text antialiased;
+  }
+
+  body {
+    @apply m-0 min-h-screen bg-background text-base text-text;
+  }
+
+  :focus-visible {
+    outline: 2px solid #58a6ff;
+    outline-offset: 2px;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .motion-color {
+    transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+  }
+
+  .drawer-enter-active,
+  .drawer-leave-active {
+    transition: transform 180ms ease, opacity 180ms ease;
+  }
+
+  .drawer-enter-from,
+  .drawer-leave-to {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+  }
+}

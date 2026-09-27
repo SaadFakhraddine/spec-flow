@@ -1,0 +1,10 @@
+services:
+  mongo:
+    image: mongo:7
+    ports:
+      - "27017:27017"
+    volumes:
+      - specflow-mongo:/data/db
+
+volumes:
+  specflow-mongo:
