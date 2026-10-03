@@ -3,11 +3,14 @@ import * as specService from '../services/specService'
 import type { SpecInput } from '../types/api.types'
 import { actorFrom } from '../utils/actor'
 import { sendData, sendPage } from '../utils/http'
-import { readLimit, readPage } from '../utils/pagination'
+import { readLimit, readPage, readText } from '../utils/pagination'
 
 export async function list(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const result = await specService.getSpecs({ page: readPage(req.query.page), limit: readLimit(req.query.limit) })
+    const result = await specService.getSpecs(
+      { page: readPage(req.query.page), limit: readLimit(req.query.limit) },
+      { status: readText(req.query.status), q: readText(req.query.q) },
+    )
     sendPage(res, result.data, result.total, result.page, result.limit)
   } catch (error) {
     next(error)

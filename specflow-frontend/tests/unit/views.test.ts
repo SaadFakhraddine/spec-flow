@@ -14,6 +14,23 @@ vi.mock('@/composables/useApi', () => ({
   registerAuthHandlers: vi.fn(),
 }))
 
+vi.mock('@/composables/useDashboard', async () => {
+  const { ref } = await import('vue')
+  return {
+    useDashboard: () => ({
+      stats: ref(null),
+      isLoading: ref(false),
+      error: ref(''),
+      load: vi.fn(),
+    }),
+    useUsers: () => ({
+      users: ref([]),
+      error: ref(''),
+      load: vi.fn(),
+    }),
+  }
+})
+
 vi.mock('@/composables/useTasks', async () => {
   const { ref } = await import('vue')
   const task = {
@@ -37,9 +54,11 @@ vi.mock('@/composables/useTasks', async () => {
       currentPage: ref(1),
       isLoading: ref(false),
       error: ref(''),
-      filters: ref({ status: 'in-progress', priority: '' }),
+      filters: ref({ status: 'in-progress', priority: '', assignedTo: '', q: '' }),
       fetchTasks: vi.fn(),
+      fetchBoardColumns: vi.fn(),
       createTask: vi.fn(),
+      updateTask: vi.fn(),
     }),
   }
 })

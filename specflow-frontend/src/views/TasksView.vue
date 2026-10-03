@@ -1,106 +1,180 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
+import { useUsers } from '@/composables/useDashboard'
 import { useTasks } from '@/composables/useTasks'
 import { useToast } from '@/composables/useToast'
-import type { TaskInput } from '@/types'
+import type { Task, TaskInput, TaskStatus } from '@/types'
 import { PAGE_LIMIT } from '@/types'
-import { formatDate } from '@/utils/format'
-import { priorityClass, taskBorder, taskPriorities, taskStatusLabel, taskStatuses } from '@/utils/status'
+import { taskStatuses } from '@/utils/status'
 import Button from '@/components/ui/Button.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
-import FilterBar from '@/components/ui/FilterBar.vue'
 import LoadingSkeleton from '@/components/ui/LoadingSkeleton.vue'
 import Pagination from '@/components/ui/Pagination.vue'
-import Select from '@/components/ui/Select.vue'
 import PageWrapper from '@/components/layout/PageWrapper.vue'
-import CreateTaskForm from '@/components/features/CreateTaskForm.vue'
+import CreateTaskDrawer from '@/components/features/CreateTaskDrawer.vue'
+import TaskFilters from '@/components/features/TaskFilters.vue'
+import TaskTableRow from '@/components/features/TaskTableRow.vue'
+import TaskBoard from '@/components/features/board/TaskBoard.vue'
 
+const route = useRoute()
 const router = useRouter()
 const { user } = useAuth()
 const toast = useToast()
-const { tasks, total, currentPage, isLoading, error, filters, fetchTasks, createTask } = useTasks()
+const { users, load: loadUsers } = useUsers()
+const {
+  tasks, total, currentPage, isLoading, error, filters,
+  fetchTasks, fetchBoardColumns, createTask, updateTask,
+} = useTasks()
+
 const creating = ref(false)
-const formRef = ref<{ stopSaving: () => void } | null>(null)
+const drawerRef = ref<{ stopSaving: () => void } | null>(null)
+const board = ref<Record<TaskStatus, Task[]> | null>(null)
+const view = computed(() => (route.query.view === 'board' ? 'board' : 'list'))
+const isAdmin = computed(() => user.value?.role === 'admin')
+const hasFilters = computed(() =>
+  Boolean(filters.value.status || filters.value.priority || filters.value.assignedTo || filters.value.q),
+)
+const emptyBoard = computed(() =>
+  !board.value || taskStatuses.every((status) => (board.value?.[status]?.length ?? 0) === 0),
+)
 
-const statusOptions = [{ value: '', label: 'All statuses' }, ...taskStatuses.map((value) => ({ value, label: taskStatusLabel[value] }))]
-const priorityOptions = [{ value: '', label: 'All priorities' }, ...taskPriorities.map((value) => ({ value, label: value[0]?.toUpperCase() + value.slice(1) }))]
-const hasFilters = computed(() => Boolean(filters.value.status || filters.value.priority))
-
-function load(page = currentPage.value): void {
-  void fetchTasks({ status: filters.value.status, priority: filters.value.priority }, page)
+function listParams() {
+  return {
+    status: filters.value.status,
+    priority: filters.value.priority,
+    assignedTo: filters.value.assignedTo,
+    q: filters.value.q,
+  }
 }
 
-onMounted(() => load(1))
-watch(filters, () => load(1), { deep: true })
+async function loadList(page = currentPage.value): Promise<void> {
+  await fetchTasks(listParams(), page)
+}
+
+async function loadBoard(): Promise<void> {
+  const { status: _status, ...rest } = listParams()
+  board.value = await fetchBoardColumns(rest)
+}
+
+function load(): void {
+  if (view.value === 'board') void loadBoard()
+  else void loadList(1)
+}
+
+function setView(next: 'list' | 'board'): void {
+  void router.replace({ query: next === 'board' ? { view: 'board' } : {} })
+}
+
+onMounted(() => {
+  if (isAdmin.value) void loadUsers()
+  load()
+})
+watch(filters, () => load(), { deep: true })
+watch(view, () => load())
 
 function open(id: string): void {
   void router.push(`/tasks/${id}`)
 }
 
+async function onStatus(id: string, status: TaskStatus): Promise<void> {
+  const updated = await updateTask(id, { status })
+  if (!updated) {
+    toast.error(error.value || 'Could not update status')
+    return
+  }
+  toast.success('Status updated')
+  if (view.value === 'board') await loadBoard()
+}
+
 async function onCreate(input: TaskInput): Promise<void> {
   const created = await createTask(input)
-  formRef.value?.stopSaving()
+  drawerRef.value?.stopSaving()
   if (!created) {
     toast.error(error.value || 'Could not create the task')
     return
   }
   creating.value = false
   toast.success('Task created')
-  load(1)
+  load()
 }
 </script>
 
 <template>
-  <PageWrapper title="Tasks">
+  <PageWrapper title="Tasks" subtitle="Track work from backlog to done">
     <template #actions>
-      <Button v-if="user?.role === 'admin'" @click="creating = true">Create task</Button>
+      <div class="flex rounded-md border border-line bg-elevated p-0.5">
+        <button
+          type="button"
+          class="rounded px-3 py-1 text-body motion-color"
+          :class="view === 'list' ? 'bg-surface text-text' : 'text-muted'"
+          @click="setView('list')"
+        >
+          List
+        </button>
+        <button
+          type="button"
+          class="rounded px-3 py-1 text-body motion-color"
+          :class="view === 'board' ? 'bg-surface text-text' : 'text-muted'"
+          @click="setView('board')"
+        >
+          Board
+        </button>
+      </div>
+      <Button v-if="isAdmin" @click="creating = true">Create task</Button>
     </template>
-    <FilterBar>
-      <div class="w-48">
-        <Select id="filter-status" v-model="filters.status" label="Status" :options="statusOptions" />
-      </div>
-      <div class="w-48">
-        <Select id="filter-priority" v-model="filters.priority" label="Priority" :options="priorityOptions" />
-      </div>
-    </FilterBar>
+
+    <TaskFilters v-model="filters" :users="users" :is-admin="isAdmin" :current-user-id="user?.id ?? ''" />
     <div v-if="error" class="mb-4">
       <p class="text-body text-danger">{{ error }}</p>
-      <Button class="mt-2" variant="secondary" @click="load()">Retry</Button>
+      <Button class="mt-2" variant="secondary" @click="load">Retry</Button>
     </div>
     <LoadingSkeleton v-if="isLoading" />
-    <EmptyState v-else-if="total === 0" :title="hasFilters ? 'No tasks match' : 'No tasks yet'" :message="hasFilters ? 'Clear the filters or create a task that fits.' : 'Tasks show up here once an admin adds the first one.'">
-      <Button v-if="user?.role === 'admin' && !hasFilters" @click="creating = true">Create the first task</Button>
-    </EmptyState>
-    <table v-else class="w-full border-collapse text-left">
-      <thead>
-        <tr class="text-label text-muted">
-          <th class="px-3 py-2 font-normal">Title</th>
-          <th class="px-3 py-2 font-normal">Status</th>
-          <th class="px-3 py-2 font-normal">Priority</th>
-          <th class="px-3 py-2 font-normal">Assigned to</th>
-          <th class="px-3 py-2 font-normal">Due date</th>
-          <th class="px-3 py-2 font-normal">Created</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="task in tasks" :key="task.id" tabindex="0" class="cursor-pointer border-b border-l-2 border-line motion-color hover:bg-surface" :class="taskBorder[task.status]" @click="open(task.id)" @keydown.enter="open(task.id)">
-          <td class="px-3 py-3 text-body">{{ task.title }}</td>
-          <td class="px-3 py-3 text-body text-muted">{{ taskStatusLabel[task.status] }}</td>
-          <td class="px-3 py-3 text-body capitalize" :class="priorityClass[task.priority]">{{ task.priority }}</td>
-          <td class="px-3 py-3 text-body">{{ task.assignedTo?.name ?? 'Unassigned' }}</td>
-          <td class="px-3 py-3 font-mono text-label">{{ formatDate(task.dueDate) }}</td>
-          <td class="px-3 py-3 font-mono text-label text-muted">{{ formatDate(task.createdAt) }}</td>
-        </tr>
-      </tbody>
-    </table>
-    <Pagination :page="currentPage" :total="total" :limit="PAGE_LIMIT" @change="load" />
-    <Transition name="drawer">
-      <aside v-if="creating" class="fixed inset-y-0 right-0 z-30 w-full max-w-md overflow-auto border-l border-line bg-background p-6">
-        <h2 class="mb-4 text-section font-medium">New task</h2>
-        <CreateTaskForm ref="formRef" @submit="onCreate" @cancel="creating = false" />
-      </aside>
-    </Transition>
+
+    <template v-else-if="view === 'list'">
+      <EmptyState
+        v-if="total === 0"
+        :title="hasFilters ? 'No tasks match' : 'No tasks yet'"
+        :message="hasFilters ? 'Clear the filters or create a task that fits.' : 'Tasks show up here once an admin adds the first one.'"
+      >
+        <Button v-if="isAdmin && !hasFilters" @click="creating = true">Create the first task</Button>
+      </EmptyState>
+      <div v-else class="sf-panel overflow-hidden">
+        <table class="sf-table">
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th>Status</th>
+              <th>Priority</th>
+              <th>Assigned to</th>
+              <th>Due date</th>
+              <th>Created</th>
+            </tr>
+          </thead>
+          <tbody>
+            <TaskTableRow
+              v-for="task in tasks"
+              :key="task.id"
+              :task="task"
+              @open="open(task.id)"
+              @status="onStatus(task.id, $event)"
+            />
+          </tbody>
+        </table>
+      </div>
+      <Pagination :page="currentPage" :total="total" :limit="PAGE_LIMIT" @change="loadList" />
+    </template>
+
+    <template v-else>
+      <EmptyState
+        v-if="emptyBoard"
+        :title="hasFilters ? 'No tasks match' : 'No tasks yet'"
+        :message="hasFilters ? 'Clear the filters or create a task that fits.' : 'Tasks show up on the board once work exists.'"
+      />
+      <TaskBoard v-else-if="board" :columns="board" @open="open" @status="onStatus" />
+    </template>
+
+    <CreateTaskDrawer ref="drawerRef" :open="creating" @submit="onCreate" @cancel="creating = false" />
   </PageWrapper>
 </template>

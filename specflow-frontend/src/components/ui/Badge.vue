@@ -3,5 +3,5 @@ defineProps<{ label: string }>()
 </script>
 
 <template>
-  <span class="inline-flex border border-line bg-background px-2 py-0.5 font-mono text-label text-muted">{{ label }}</span>
+  <span class="sf-chip border border-line bg-elevated text-muted">{{ label }}</span>
 </template>

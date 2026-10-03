@@ -5,6 +5,7 @@ defineProps<{
   modelValue: string
   options: { value: string; label: string }[]
   error?: string
+  compact?: boolean
 }>()
 defineEmits<{ 'update:modelValue': [string] }>()
 </script>
@@ -15,7 +16,8 @@ defineEmits<{ 'update:modelValue': [string] }>()
     <select
       :id="id"
       :value="modelValue"
-      class="w-full rounded-sm border border-line bg-background px-3 py-2 text-body text-text motion-color focus:border-primary"
+      class="w-full rounded-md border border-line bg-elevated text-body text-text motion-color focus:border-primary"
+      :class="compact ? 'px-2 py-1 text-label' : 'px-3 py-2'"
       @change="$emit('update:modelValue', ($event.target as HTMLSelectElement).value)"
     >
       <option v-for="option in options" :key="option.value" :value="option.value">{{ option.label }}</option>

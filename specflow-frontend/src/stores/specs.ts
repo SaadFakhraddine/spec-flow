@@ -1,9 +1,16 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import apiClient from '@/composables/useApi'
-import type { ApiResponse, PaginatedResponse, Spec, SpecForm } from '@/types'
+import type { ApiResponse, PaginatedResponse, Spec, SpecFilters, SpecForm } from '@/types'
 import { PAGE_LIMIT } from '@/types'
 import { errorMessage } from '@/utils/errors'
+
+function cleanSpecFilters(filters: SpecFilters): Record<string, string> {
+  const params: Record<string, string> = {}
+  if (filters.status) params.status = filters.status
+  if (filters.q) params.q = filters.q
+  return params
+}
 
 export const useSpecsStore = defineStore('specs', () => {
   const specs = ref<Spec[]>([])
@@ -26,10 +33,12 @@ export const useSpecsStore = defineStore('specs', () => {
     }
   }
 
-  async function fetchSpecs(page: number): Promise<void> {
+  async function fetchSpecs(page: number, filters: SpecFilters = {}): Promise<void> {
     currentPage.value = page
     await run(async () => {
-      const response = await apiClient.get<PaginatedResponse<Spec>>('/specs', { params: { page, limit: PAGE_LIMIT } })
+      const response = await apiClient.get<PaginatedResponse<Spec>>('/specs', {
+        params: { ...cleanSpecFilters(filters), page, limit: PAGE_LIMIT },
+      })
       specs.value = response.data.data
       total.value = response.data.total
     })

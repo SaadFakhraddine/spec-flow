@@ -1,9 +1,12 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import apiClient from '@/composables/useApi'
-import type { ApiResponse, PaginatedResponse, Task, TaskFilters, TaskInput } from '@/types'
+import type { ApiResponse, PaginatedResponse, Task, TaskFilters, TaskInput, TaskStatus } from '@/types'
 import { PAGE_LIMIT } from '@/types'
 import { errorMessage } from '@/utils/errors'
+import { taskStatuses } from '@/utils/status'
+
+const BOARD_LIMIT = 50
 
 function cleanFilters(filters: TaskFilters): Record<string, string> {
   const params: Record<string, string> = {}
@@ -92,6 +95,23 @@ export const useTasksStore = defineStore('tasks', () => {
     })
   }
 
+  async function fetchBoardColumns(
+    filters: Omit<TaskFilters, 'status'>,
+  ): Promise<Record<TaskStatus, Task[]> | null> {
+    return run(async () => {
+      const base = cleanFilters(filters)
+      const results = await Promise.all(
+        taskStatuses.map(async (status) => {
+          const response = await apiClient.get<PaginatedResponse<Task>>('/tasks', {
+            params: { ...base, status, page: 1, limit: BOARD_LIMIT },
+          })
+          return [status, response.data.data] as const
+        }),
+      )
+      return Object.fromEntries(results) as Record<TaskStatus, Task[]>
+    })
+  }
+
   return {
     tasks,
     total,
@@ -101,6 +121,7 @@ export const useTasksStore = defineStore('tasks', () => {
     selectedTask,
     fetchTasks,
     fetchTaskById,
+    fetchBoardColumns,
     createTask,
     updateTask,
     deleteTask,

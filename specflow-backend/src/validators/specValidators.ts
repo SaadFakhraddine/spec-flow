@@ -11,6 +11,8 @@ const criteria = body('acceptanceCriteria.*')
 export const listSpecValidator = [
   query('page').optional().isInt({ min: 1 }).withMessage('Invalid page'),
   query('limit').optional().isInt({ min: 1, max: 50 }).withMessage('Invalid limit'),
+  query('status').optional().isIn(SPEC_STATUSES).withMessage('Invalid status'),
+  query('q').optional().isString().trim().isLength({ max: 100 }).withMessage('Search is too long'),
 ]
 
 export const createSpecValidator = [

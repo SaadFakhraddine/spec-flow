@@ -48,6 +48,15 @@ export interface Spec {
   updatedAt: string
 }
 
+export interface Comment {
+  id: string
+  taskId: string
+  body: string
+  author: UserRef
+  createdAt: string
+  updatedAt: string
+}
+
 export interface ApiResponse<T> {
   success: boolean
   data: T
@@ -67,6 +76,11 @@ export interface TaskFilters {
   status?: string
   priority?: string
   assignedTo?: string
+  q?: string
+}
+
+export interface SpecFilters {
+  status?: string
   q?: string
 }
 

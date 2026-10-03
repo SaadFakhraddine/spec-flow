@@ -10,10 +10,10 @@ withDefaults(
 )
 
 const styles = {
-  primary: 'bg-primary text-background hover:bg-[#79b8ff]',
-  secondary: 'border border-line bg-surface text-text hover:bg-line',
-  danger: 'bg-danger text-white hover:bg-[#ff7b75]',
-  ghost: 'bg-transparent text-muted hover:bg-surface hover:text-text',
+  primary: 'bg-primary text-background hover:brightness-110',
+  secondary: 'border border-line bg-elevated text-text hover:border-primary/40',
+  danger: 'bg-danger text-background hover:brightness-110',
+  ghost: 'bg-transparent text-muted hover:bg-elevated hover:text-text',
 }
 </script>
 
@@ -21,7 +21,7 @@ const styles = {
   <button
     :type="type"
     :disabled="disabled || loading"
-    class="inline-flex items-center justify-center rounded-sm px-3 py-1.5 text-body font-medium motion-color disabled:cursor-not-allowed disabled:opacity-50"
+    class="inline-flex items-center justify-center rounded-md px-3 py-1.5 text-body font-medium motion-color disabled:cursor-not-allowed disabled:opacity-50"
     :class="styles[variant]"
   >
     <slot v-if="!loading" />

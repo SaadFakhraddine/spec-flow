@@ -39,7 +39,7 @@ watch(
       :value="modelValue"
       :maxlength="max"
       rows="3"
-      class="w-full resize-none overflow-hidden rounded-sm border border-line bg-background px-3 py-2 text-body text-text motion-color focus:border-primary"
+      class="w-full resize-none overflow-hidden rounded-md border border-line bg-elevated px-3 py-2 text-body text-text motion-color focus:border-primary"
       @input="onInput"
     />
     <span v-if="error" class="mt-1 block text-label text-danger">{{ error }}</span>

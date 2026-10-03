@@ -4,6 +4,7 @@ import type { Actor, Page, SpecDto, SpecInput, TaskDto } from '../types/api.type
 import { assertAdmin } from '../utils/actor'
 import { AppError } from '../utils/AppError'
 import { mapSpecSource, mapTaskSource } from '../utils/mappers'
+import { escapeRegex } from '../utils/pagination'
 
 const USER_FIELDS = 'name email'
 
@@ -23,12 +24,18 @@ function toDto(spec: unknown, tasks: unknown[]): SpecDto {
   return mapSpecSource(spec, tasks.map((task) => mapTaskSource(task)))
 }
 
-export async function getSpecs(pageQuery: Page) {
+export async function getSpecs(
+  pageQuery: Page,
+  filters: { status?: string; q?: string } = {},
+) {
   const { page, limit } = pageQuery
   const skip = (page - 1) * limit
+  const query: Record<string, unknown> = {}
+  if (filters.status) query.status = filters.status
+  if (filters.q) query.title = { $regex: escapeRegex(filters.q), $options: 'i' }
   const [docs, total] = await Promise.all([
-    Spec.find().sort({ updatedAt: -1 }).skip(skip).limit(limit).populate('createdBy', USER_FIELDS),
-    Spec.countDocuments(),
+    Spec.find(query).sort({ updatedAt: -1 }).skip(skip).limit(limit).populate('createdBy', USER_FIELDS),
+    Spec.countDocuments(query),
   ])
   return { data: docs.map((doc) => toDto(doc, [])), total, page, limit }
 }

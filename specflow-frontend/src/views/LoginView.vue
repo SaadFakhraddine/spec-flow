@@ -29,21 +29,56 @@ async function onSubmit(): Promise<void> {
 </script>
 
 <template>
-  <main class="min-h-screen bg-background px-8 py-16">
-    <p class="font-mono text-body text-primary">SpecFlow</p>
-    <h1 class="mt-6 text-title font-semibold">{{ mode === 'login' ? 'Sign in' : 'Create an account' }}</h1>
-    <p class="mt-2 max-w-md text-body text-muted">
-      Feature requests, technical specs, and the tasks that fall out of them.
-    </p>
-    <form class="mt-8 flex max-w-md flex-col gap-4" @submit.prevent="onSubmit">
-      <Input v-if="mode === 'register'" id="name" v-model="form.name" label="Name" :error="errors.name" @update:model-value="clearField('name')" />
-      <Input id="email" v-model="form.email" label="Email" type="email" :error="errors.email" @update:model-value="clearField('email')" />
-      <Input id="password" v-model="form.password" label="Password" type="password" :error="errors.password" @update:model-value="clearField('password')" />
-      <p v-if="error" class="text-body text-danger">{{ error }}</p>
-      <Button type="submit" :loading="loading">{{ mode === 'login' ? 'Sign in' : 'Create account' }}</Button>
-    </form>
-    <button type="button" class="mt-6 text-body text-primary" @click="mode = mode === 'login' ? 'register' : 'login'">
-      {{ mode === 'login' ? 'Create an account' : 'Already have an account? Sign in' }}
-    </button>
+  <main class="relative flex min-h-screen items-center justify-center px-6 py-12">
+    <div class="pointer-events-none absolute inset-0 overflow-hidden">
+      <div class="absolute -left-24 top-0 h-72 w-72 rounded-full bg-primary/10 blur-3xl" />
+      <div class="absolute bottom-0 right-0 h-80 w-80 rounded-full bg-warning/5 blur-3xl" />
+    </div>
+    <div class="relative w-full max-w-md animate-sf-fade sf-panel p-8">
+      <p class="font-mono text-section font-semibold text-primary">SpecFlow</p>
+      <h1 class="mt-4 text-title font-semibold">
+        {{ mode === 'login' ? 'Sign in' : 'Create an account' }}
+      </h1>
+      <p class="mt-2 text-body text-muted">
+        Specs, tasks, and the path from request to done.
+      </p>
+      <form class="mt-8 flex flex-col gap-4" @submit.prevent="onSubmit">
+        <Input
+          v-if="mode === 'register'"
+          id="name"
+          v-model="form.name"
+          label="Name"
+          :error="errors.name"
+          @update:model-value="clearField('name')"
+        />
+        <Input
+          id="email"
+          v-model="form.email"
+          label="Email"
+          type="email"
+          :error="errors.email"
+          @update:model-value="clearField('email')"
+        />
+        <Input
+          id="password"
+          v-model="form.password"
+          label="Password"
+          type="password"
+          :error="errors.password"
+          @update:model-value="clearField('password')"
+        />
+        <p v-if="error" class="text-body text-danger">{{ error }}</p>
+        <Button type="submit" :loading="loading">
+          {{ mode === 'login' ? 'Sign in' : 'Create account' }}
+        </Button>
+      </form>
+      <button
+        type="button"
+        class="mt-6 text-body text-primary motion-color hover:brightness-110"
+        @click="mode = mode === 'login' ? 'register' : 'login'"
+      >
+        {{ mode === 'login' ? 'Create an account' : 'Already have an account? Sign in' }}
+      </button>
+    </div>
   </main>
 </template>

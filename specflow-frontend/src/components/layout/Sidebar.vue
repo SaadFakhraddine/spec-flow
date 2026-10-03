@@ -24,23 +24,34 @@ async function signOut(): Promise<void> {
 </script>
 
 <template>
-  <aside class="flex w-56 shrink-0 flex-col border-r border-line bg-background px-4 py-6">
-    <p class="px-2 font-mono text-body text-primary">SpecFlow</p>
-    <nav class="mt-8 flex flex-col gap-1" aria-label="Primary">
+  <aside class="flex w-52 shrink-0 flex-col border-r border-line bg-surface/80 px-3 py-5 backdrop-blur">
+    <div class="px-2">
+      <p class="font-mono text-section font-semibold tracking-tight text-primary">SpecFlow</p>
+      <p class="mt-0.5 text-label text-muted">Specs to shipping</p>
+    </div>
+    <nav class="mt-8 flex flex-col gap-0.5" aria-label="Primary">
       <RouterLink
         v-for="link in links"
         :key="link.to"
         :to="link.to"
-        class="border-l-2 px-2 py-2 text-body motion-color"
-        :class="active(link.to) ? 'border-l-primary bg-surface text-text' : 'border-l-transparent text-muted hover:bg-surface hover:text-text'"
+        class="rounded-md border-l-2 px-2.5 py-2 text-body motion-color"
+        :class="active(link.to)
+          ? 'border-l-primary bg-elevated text-text'
+          : 'border-l-transparent text-muted hover:bg-elevated/70 hover:text-text'"
       >
         {{ link.label }}
       </RouterLink>
     </nav>
     <div class="mt-auto border-t border-line pt-4">
-      <p class="px-2 text-body">{{ user?.name }}</p>
-      <p class="px-2 text-label capitalize text-muted">{{ user?.role }}</p>
-      <button type="button" class="mt-3 px-2 text-body text-muted motion-color hover:text-text" @click="signOut">Log out</button>
+      <p class="truncate px-2 text-body">{{ user?.name }}</p>
+      <span class="sf-chip ml-2 mt-1 bg-elevated text-primary">{{ user?.role }}</span>
+      <button
+        type="button"
+        class="mt-3 block px-2 text-body text-muted motion-color hover:text-primary"
+        @click="signOut"
+      >
+        Log out
+      </button>
     </div>
   </aside>
 </template>

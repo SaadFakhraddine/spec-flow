@@ -6,25 +6,38 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-        mono: ['JetBrains Mono', 'ui-monospace', 'monospace'],
+        sans: ['"IBM Plex Sans"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
       },
       fontSize: {
         label: ['12px', '16px'],
         body: ['14px', '20px'],
-        section: ['20px', '28px'],
-        title: ['28px', '36px'],
+        section: ['18px', '26px'],
+        title: ['26px', '34px'],
       },
       colors: {
-        background: '#0D1117',
-        surface: '#161B22',
-        line: '#21262D',
-        primary: '#58A6FF',
-        success: '#3FB950',
-        danger: '#F85149',
-        warning: '#E3B341',
-        muted: '#8B949E',
-        text: '#E6EDF3',
+        background: 'var(--sf-bg)',
+        surface: 'var(--sf-surface)',
+        elevated: 'var(--sf-elevated)',
+        line: 'var(--sf-line)',
+        primary: 'var(--sf-accent)',
+        success: 'var(--sf-success)',
+        danger: 'var(--sf-danger)',
+        warning: 'var(--sf-warning)',
+        muted: 'var(--sf-muted)',
+        text: 'var(--sf-text)',
+      },
+      boxShadow: {
+        panel: '0 1px 0 rgba(255,255,255,0.04), 0 12px 40px rgba(0,0,0,0.35)',
+      },
+      keyframes: {
+        'sf-fade': {
+          from: { opacity: '0', transform: 'translateY(4px)' },
+          to: { opacity: '1', transform: 'translateY(0)' },
+        },
+      },
+      animation: {
+        'sf-fade': 'sf-fade 180ms ease-out',
       },
     },
   },

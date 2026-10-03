@@ -7,7 +7,7 @@ import { useToast } from '@/composables/useToast'
 import { useUsers } from '@/composables/useDashboard'
 import type { TaskInput, TaskStatus } from '@/types'
 import { formatDate } from '@/utils/format'
-import { taskPriorities, taskStatusLabel, taskStatuses } from '@/utils/status'
+import { taskBorder, taskPriorities, taskStatusLabel, taskStatuses } from '@/utils/status'
 import Badge from '@/components/ui/Badge.vue'
 import Button from '@/components/ui/Button.vue'
 import ConfirmDialog from '@/components/ui/ConfirmDialog.vue'
@@ -16,6 +16,7 @@ import Select from '@/components/ui/Select.vue'
 import PageWrapper from '@/components/layout/PageWrapper.vue'
 import Input from '@/components/ui/Input.vue'
 import Textarea from '@/components/ui/Textarea.vue'
+import TaskComments from '@/components/features/TaskComments.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -28,8 +29,14 @@ const confirming = ref(false)
 const draft = ref({ title: '', description: '', priority: 'medium', dueDate: '', tags: '' })
 
 const statusOptions = taskStatuses.map((value) => ({ value, label: taskStatusLabel[value] }))
-const priorityOptions = taskPriorities.map((value) => ({ value, label: value.charAt(0).toUpperCase() + value.slice(1) }))
-const assigneeOptions = computed(() => [{ value: '', label: 'Choose a person' }, ...users.value.map((person) => ({ value: person.id, label: person.name }))])
+const priorityOptions = taskPriorities.map((value) => ({
+  value,
+  label: value.charAt(0).toUpperCase() + value.slice(1),
+}))
+const assigneeOptions = computed(() => [
+  { value: '', label: 'Choose a person' },
+  ...users.value.map((person) => ({ value: person.id, label: person.name })),
+])
 const isAdmin = computed(() => user.value?.role === 'admin')
 
 function taskId(): string {
@@ -96,49 +103,89 @@ async function onDelete(): Promise<void> {
 </script>
 
 <template>
-  <PageWrapper :title="selectedTask?.title ?? 'Task'">
+  <PageWrapper :title="selectedTask?.title ?? 'Task'" subtitle="Issue detail">
     <LoadingSkeleton v-if="isLoading && !selectedTask" />
     <div v-else-if="error && !selectedTask">
       <p class="text-body text-danger">{{ error }}</p>
       <Button class="mt-3" variant="secondary" @click="fetchTaskById(taskId())">Retry</Button>
     </div>
     <template v-else-if="selectedTask">
-      <div class="mb-6 flex flex-wrap items-end gap-4">
-        <div class="w-52">
-          <Select id="task-status" :model-value="selectedTask.status" label="Status" :options="statusOptions" @update:model-value="onStatus" />
-        </div>
-        <div v-if="isAdmin" class="w-56">
-          <Select id="task-assign" :model-value="selectedTask.assignedTo?.id ?? ''" label="Assign to" :options="assigneeOptions" @update:model-value="onAssign" />
-        </div>
-        <Button v-if="isAdmin" variant="secondary" @click="startEdit">Edit</Button>
-        <Button v-if="isAdmin" variant="danger" @click="confirming = true">Delete</Button>
-      </div>
-      <form v-if="editing" class="mb-6 flex max-w-xl flex-col gap-4" @submit.prevent="saveEdit">
-        <Input id="edit-title" v-model="draft.title" label="Title" />
-        <Textarea id="edit-description" v-model="draft.description" label="Description" :max="500" />
-        <Select id="edit-priority" v-model="draft.priority" label="Priority" :options="priorityOptions" />
-        <Input id="edit-due" v-model="draft.dueDate" label="Due date" type="date" />
-        <Input id="edit-tags" v-model="draft.tags" label="Tags" />
-        <div class="flex gap-2">
-          <Button type="submit">Save</Button>
-          <Button variant="ghost" type="button" @click="editing = false">Cancel</Button>
-        </div>
-      </form>
-      <dl v-else class="max-w-3xl space-y-4 text-body">
-        <div><dt class="text-label text-muted">Description</dt><dd class="mt-1 whitespace-pre-wrap">{{ selectedTask.description || '—' }}</dd></div>
-        <div><dt class="text-label text-muted">Priority</dt><dd class="mt-1 capitalize">{{ selectedTask.priority }}</dd></div>
-        <div><dt class="text-label text-muted">Due date</dt><dd class="mt-1 font-mono text-label">{{ formatDate(selectedTask.dueDate) }}</dd></div>
-        <div><dt class="text-label text-muted">Created by</dt><dd class="mt-1">{{ selectedTask.createdBy.name }}</dd></div>
+      <div class="grid gap-6 lg:grid-cols-[1fr_22rem]">
         <div>
-          <dt class="text-label text-muted">Tags</dt>
-          <dd class="mt-2 flex flex-wrap gap-2"><Badge v-for="tag in selectedTask.tags" :key="tag" :label="tag" /></dd>
+          <div class="mb-6 flex flex-wrap items-end gap-3">
+            <div class="w-48">
+              <Select
+                id="task-status"
+                :model-value="selectedTask.status"
+                label="Status"
+                :options="statusOptions"
+                @update:model-value="onStatus"
+              />
+            </div>
+            <div v-if="isAdmin" class="w-52">
+              <Select
+                id="task-assign"
+                :model-value="selectedTask.assignedTo?.id ?? ''"
+                label="Assign to"
+                :options="assigneeOptions"
+                @update:model-value="onAssign"
+              />
+            </div>
+            <Button v-if="isAdmin" variant="secondary" @click="startEdit">Edit</Button>
+            <Button v-if="isAdmin" variant="danger" @click="confirming = true">Delete</Button>
+          </div>
+          <form v-if="editing" class="sf-panel mb-6 flex flex-col gap-4 p-4" @submit.prevent="saveEdit">
+            <Input id="edit-title" v-model="draft.title" label="Title" />
+            <Textarea id="edit-description" v-model="draft.description" label="Description" :max="500" />
+            <Select id="edit-priority" v-model="draft.priority" label="Priority" :options="priorityOptions" />
+            <Input id="edit-due" v-model="draft.dueDate" label="Due date" type="date" />
+            <Input id="edit-tags" v-model="draft.tags" label="Tags" />
+            <div class="flex gap-2">
+              <Button type="submit">Save</Button>
+              <Button variant="ghost" type="button" @click="editing = false">Cancel</Button>
+            </div>
+          </form>
+          <dl v-else class="sf-panel space-y-4 p-4 text-body" :class="taskBorder[selectedTask.status]">
+            <div>
+              <dt class="text-label text-muted">Description</dt>
+              <dd class="mt-1 whitespace-pre-wrap">{{ selectedTask.description || '—' }}</dd>
+            </div>
+            <div>
+              <dt class="text-label text-muted">Priority</dt>
+              <dd class="mt-1 capitalize">{{ selectedTask.priority }}</dd>
+            </div>
+            <div>
+              <dt class="text-label text-muted">Due date</dt>
+              <dd class="mt-1 font-mono text-label">{{ formatDate(selectedTask.dueDate) }}</dd>
+            </div>
+            <div>
+              <dt class="text-label text-muted">Created by</dt>
+              <dd class="mt-1">{{ selectedTask.createdBy.name }}</dd>
+            </div>
+            <div>
+              <dt class="text-label text-muted">Tags</dt>
+              <dd class="mt-2 flex flex-wrap gap-2">
+                <Badge v-for="tag in selectedTask.tags" :key="tag" :label="tag" />
+              </dd>
+            </div>
+            <div v-if="selectedTask.specId">
+              <dt class="text-label text-muted">Spec</dt>
+              <dd class="mt-1">
+                <RouterLink class="text-primary" :to="`/specs/${selectedTask.specId}`">Open linked spec</RouterLink>
+              </dd>
+            </div>
+          </dl>
         </div>
-        <div v-if="selectedTask.specId">
-          <dt class="text-label text-muted">Spec</dt>
-          <dd class="mt-1"><RouterLink class="text-primary" :to="`/specs/${selectedTask.specId}`">Open linked spec</RouterLink></dd>
-        </div>
-      </dl>
+        <TaskComments :task-id="selectedTask.id" />
+      </div>
     </template>
-    <ConfirmDialog v-if="confirming" title="Delete this task?" message="This removes the task from the board and from any linked spec." confirm-label="Delete" @cancel="confirming = false" @confirm="onDelete" />
+    <ConfirmDialog
+      v-if="confirming"
+      title="Delete this task?"
+      message="This removes the task from the board and from any linked spec."
+      confirm-label="Delete"
+      @cancel="confirming = false"
+      @confirm="onDelete"
+    />
   </PageWrapper>
 </template>

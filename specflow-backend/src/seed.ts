@@ -1,5 +1,6 @@
 import { connectDb, disconnectDb } from './config/db'
 import { logger } from './config/logger'
+import { Comment } from './models/Comment'
 import { Spec } from './models/Spec'
 import { Task } from './models/Task'
 import { User } from './models/User'
@@ -69,6 +70,39 @@ async function ensureSample(adminId: string, developerId: string): Promise<void>
   ])
   spec.tasks = tasks.filter((task) => task.specId).map((task) => task._id)
   await spec.save()
+  const first = tasks[0]
+  if (first) {
+    await Comment.create([
+      {
+        taskId: first.id,
+        authorId: adminId,
+        body: 'Cookie path and Secure flags are set for production cross-site use.',
+      },
+      {
+        taskId: first.id,
+        authorId: developerId,
+        body: 'Verified the refresh call does not go through the axios interceptor.',
+      },
+    ])
+  }
+}
+
+async function ensureComments(adminId: string, developerId: string): Promise<void> {
+  if ((await Comment.countDocuments()) > 0) return
+  const task = await Task.findOne().sort({ createdAt: 1 })
+  if (!task) return
+  await Comment.create([
+    {
+      taskId: task.id,
+      authorId: adminId,
+      body: 'Cookie path and Secure flags are set for production cross-site use.',
+    },
+    {
+      taskId: task.id,
+      authorId: developerId,
+      body: 'Verified the refresh call does not go through the axios interceptor.',
+    },
+  ])
 }
 
 async function seed(): Promise<void> {
@@ -76,6 +110,7 @@ async function seed(): Promise<void> {
   const users = await ensureUsers()
   if (!users.admin || !users.developer) throw new Error('Seed users were not created')
   await ensureSample(users.admin.id, users.developer.id)
+  await ensureComments(users.admin.id, users.developer.id)
   logger.info('Seed complete')
   await disconnectDb()
 }

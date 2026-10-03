@@ -5,7 +5,7 @@ import Sidebar from './Sidebar.vue'
 <template>
   <div class="flex min-h-screen">
     <Sidebar />
-    <main class="min-w-0 flex-1">
+    <main class="min-w-0 flex-1 animate-sf-fade">
       <slot />
     </main>
   </div>
