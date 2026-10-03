@@ -15,12 +15,26 @@ function populateTask<T extends { populate: (path: string, select: string) => T 
   return query.populate('assignedTo', USER_FIELDS).populate('createdBy', USER_FIELDS)
 }
 
+function applyDueFilter(query: Record<string, unknown>, due?: 'overdue' | 'soon'): void {
+  if (!due) return
+  const now = new Date()
+  if (due === 'overdue') {
+    query.dueDate = { $ne: null, $lt: now }
+    query.status = query.status ?? { $ne: 'done' }
+    return
+  }
+  const week = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
+  query.dueDate = { $ne: null, $gte: now, $lte: week }
+  query.status = query.status ?? { $ne: 'done' }
+}
+
 export async function getTasks(filters: TaskFilters, pageQuery: Page) {
   const query: Record<string, unknown> = {}
   if (filters.status) query.status = filters.status
   if (filters.priority) query.priority = filters.priority
   if (filters.assignedTo) query.assignedTo = filters.assignedTo
   if (filters.q) query.title = { $regex: escapeRegex(filters.q), $options: 'i' }
+  applyDueFilter(query, filters.due)
   const skip = (pageQuery.page - 1) * pageQuery.limit
   const [items, total] = await Promise.all([
     populateTask(Task.find(query).sort({ updatedAt: -1 }).skip(skip).limit(pageQuery.limit)),

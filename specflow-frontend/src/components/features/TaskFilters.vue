@@ -28,13 +28,18 @@ const assigneeOptions = computed(() => [
   { value: '', label: 'Anyone' },
   ...props.users.map((person) => ({ value: person.id, label: person.name })),
 ])
+const dueOptions = [
+  { value: '', label: 'Any due date' },
+  { value: 'overdue', label: 'Overdue' },
+  { value: 'soon', label: 'Due in 7 days' },
+]
 
 function patch(partial: Partial<Filters>): void {
   emit('update:modelValue', { ...props.modelValue, ...partial })
 }
 
 function clear(): void {
-  emit('update:modelValue', { status: '', priority: '', assignedTo: '', q: '' })
+  emit('update:modelValue', { status: '', priority: '', assignedTo: '', q: '', due: '' })
 }
 
 function myTasks(): void {
@@ -78,6 +83,15 @@ function myTasks(): void {
         label="Assignee"
         :options="assigneeOptions"
         @update:model-value="patch({ assignedTo: $event })"
+      />
+    </div>
+    <div class="w-44">
+      <Select
+        id="filter-due"
+        :model-value="modelValue.due ?? ''"
+        label="Due"
+        :options="dueOptions"
+        @update:model-value="patch({ due: $event })"
       />
     </div>
     <Button variant="secondary" @click="myTasks">My tasks</Button>

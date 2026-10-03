@@ -10,6 +10,7 @@ export function useTasks() {
     priority: '',
     assignedTo: '',
     q: '',
+    due: '',
   })
 
   return {

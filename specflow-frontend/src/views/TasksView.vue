@@ -36,7 +36,13 @@ const board = ref<BoardColumns | null>(null)
 const view = computed(() => (route.query.view === 'board' ? 'board' : 'list'))
 const isAdmin = computed(() => user.value?.role === 'admin')
 const hasFilters = computed(() =>
-  Boolean(filters.value.status || filters.value.priority || filters.value.assignedTo || filters.value.q),
+  Boolean(
+    filters.value.status ||
+      filters.value.priority ||
+      filters.value.assignedTo ||
+      filters.value.q ||
+      filters.value.due,
+  ),
 )
 const emptyBoard = computed(() =>
   !board.value || taskStatuses.every((status) => (board.value?.[status]?.length ?? 0) === 0),
@@ -48,6 +54,7 @@ function listParams() {
     priority: filters.value.priority,
     assignedTo: filters.value.assignedTo,
     q: filters.value.q,
+    due: filters.value.due,
   }
 }
 

@@ -7,9 +7,14 @@ import { startOfWeek } from '../utils/pagination'
 const USER_FIELDS = 'name email'
 const OPEN = { $ne: 'done' }
 
-function openFilter(actor: Actor): Record<string, unknown> {
+function scopedOpen(actor: Actor): Record<string, unknown> {
   if (actor.role === 'admin') return { status: OPEN }
   return { status: OPEN, assignedTo: actor.id }
+}
+
+function withAssignee(actor: Actor, filter: Record<string, unknown>): Record<string, unknown> {
+  if (actor.role === 'admin') return filter
+  return { ...filter, assignedTo: actor.id }
 }
 
 async function countCompleted(actor: Actor, since: Date): Promise<number> {
@@ -29,12 +34,25 @@ async function recentTasks(): Promise<TaskDto[]> {
 
 export async function getDashboard(actor: Actor): Promise<DashboardDto> {
   const since = startOfWeek(new Date())
-  const [totalTasks, openTasks, specsInReview, completedThisWeek, recentActivity] = await Promise.all([
-    Task.countDocuments(),
-    Task.countDocuments(openFilter(actor)),
-    Spec.countDocuments({ status: 'in-review' }),
-    countCompleted(actor, since),
-    recentTasks(),
-  ])
-  return { totalTasks, openTasks, specsInReview, completedThisWeek, recentActivity }
+  const now = new Date()
+  const week = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
+  const [totalTasks, openTasks, specsInReview, completedThisWeek, overdueCount, dueSoonCount, recentActivity] =
+    await Promise.all([
+      Task.countDocuments(),
+      Task.countDocuments(scopedOpen(actor)),
+      Spec.countDocuments({ status: 'in-review' }),
+      countCompleted(actor, since),
+      Task.countDocuments(withAssignee(actor, { status: OPEN, dueDate: { $ne: null, $lt: now } })),
+      Task.countDocuments(withAssignee(actor, { status: OPEN, dueDate: { $ne: null, $gte: now, $lte: week } })),
+      recentTasks(),
+    ])
+  return {
+    totalTasks,
+    openTasks,
+    specsInReview,
+    completedThisWeek,
+    overdueCount,
+    dueSoonCount,
+    recentActivity,
+  }
 }

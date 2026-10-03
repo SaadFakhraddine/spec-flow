@@ -6,6 +6,7 @@ export const listTaskValidator = [
   query('priority').optional().isIn(TASK_PRIORITIES).withMessage('Invalid priority'),
   query('assignedTo').optional().isMongoId().withMessage('Invalid assignee'),
   query('q').optional().isString().isLength({ max: 100 }).withMessage('Search is too long'),
+  query('due').optional().isIn(['overdue', 'soon']).withMessage('Invalid due filter'),
   query('page').optional().isInt({ min: 1 }).withMessage('Invalid page'),
   query('limit').optional().isInt({ min: 1, max: 50 }).withMessage('Invalid limit'),
 ]

@@ -79,11 +79,14 @@ export interface SpecInput {
   status?: SpecStatus
 }
 
+export type DueFilter = 'overdue' | 'soon'
+
 export interface TaskFilters {
   status?: TaskStatus
   priority?: TaskPriority
   assignedTo?: string
   q?: string
+  due?: DueFilter
 }
 
 export interface Page {
@@ -96,5 +99,7 @@ export interface DashboardDto {
   openTasks: number
   specsInReview: number
   completedThisWeek: number
+  overdueCount: number
+  dueSoonCount: number
   recentActivity: TaskDto[]
 }

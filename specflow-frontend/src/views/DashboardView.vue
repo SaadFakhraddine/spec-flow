@@ -15,6 +15,8 @@ const blocks = computed(() => {
   return [
     { label: 'Total tasks', value: stats.value?.totalTasks ?? 0 },
     { label: openLabel, value: stats.value?.openTasks ?? 0 },
+    { label: 'Overdue', value: stats.value?.overdueCount ?? 0 },
+    { label: 'Due in 7 days', value: stats.value?.dueSoonCount ?? 0 },
     { label: 'Specs in review', value: stats.value?.specsInReview ?? 0 },
     { label: 'Completed this week', value: stats.value?.completedThisWeek ?? 0 },
   ]
@@ -37,7 +39,7 @@ onMounted(() => {
       <Button class="mt-3" variant="secondary" @click="load">Retry</Button>
     </div>
     <template v-else>
-      <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div class="grid grid-cols-2 gap-3 lg:grid-cols-3">
         <div v-for="block in blocks" :key="block.label" class="sf-panel px-4 py-3">
           <p class="font-mono text-title text-primary">{{ block.value }}</p>
           <p class="mt-1 text-body text-muted">{{ block.label }}</p>

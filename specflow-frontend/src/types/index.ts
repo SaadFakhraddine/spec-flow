@@ -103,6 +103,7 @@ export interface TaskFilters {
   priority?: string
   assignedTo?: string
   q?: string
+  due?: string
 }
 
 export interface SpecFilters {
@@ -137,6 +138,8 @@ export interface DashboardStats {
   openTasks: number
   specsInReview: number
   completedThisWeek: number
+  overdueCount: number
+  dueSoonCount: number
   recentActivity: Task[]
 }
 

@@ -19,7 +19,15 @@ describe('useDashboard', () => {
     vi.mocked(apiClient.get).mockResolvedValue({
       data: {
         success: true,
-        data: { totalTasks: 4, openTasks: 2, specsInReview: 1, completedThisWeek: 1, recentActivity: [] },
+        data: {
+          totalTasks: 4,
+          openTasks: 2,
+          specsInReview: 1,
+          completedThisWeek: 1,
+          overdueCount: 1,
+          dueSoonCount: 2,
+          recentActivity: [],
+        },
       },
     })
     const dashboard = useDashboard()
