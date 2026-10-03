@@ -3,16 +3,16 @@
 @tailwind utilities;
 
 :root {
-  --sf-bg: #0b1219;
-  --sf-surface: #121a24;
-  --sf-elevated: #1a2431;
-  --sf-line: #2a3645;
-  --sf-accent: #2dd4bf;
-  --sf-success: #34d399;
-  --sf-danger: #f87171;
-  --sf-warning: #fbbf24;
-  --sf-muted: #8fa0b3;
-  --sf-text: #e8eef6;
+  --sf-bg: 11 18 25;
+  --sf-surface: 18 26 36;
+  --sf-elevated: 26 36 49;
+  --sf-line: 42 54 69;
+  --sf-accent: 45 212 191;
+  --sf-success: 52 211 153;
+  --sf-danger: 248 113 113;
+  --sf-warning: 251 191 36;
+  --sf-muted: 143 160 179;
+  --sf-text: 232 238 246;
 }
 
 @layer base {
@@ -29,7 +29,7 @@
   }
 
   :focus-visible {
-    outline: 2px solid var(--sf-accent);
+    outline: 2px solid rgb(var(--sf-accent));
     outline-offset: 2px;
   }
 }
