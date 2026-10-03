@@ -3,7 +3,11 @@ import mongoose, { Schema } from 'mongoose'
 const notificationSchema = new Schema(
   {
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
-    type: { type: String, enum: ['task.assigned', 'comment.created'], required: true },
+    type: {
+      type: String,
+      enum: ['task.assigned', 'comment.created', 'task.status'],
+      required: true,
+    },
     message: { type: String, required: true, maxlength: 300 },
     taskId: { type: Schema.Types.ObjectId, ref: 'Task', default: null },
     readAt: { type: Date, default: null },

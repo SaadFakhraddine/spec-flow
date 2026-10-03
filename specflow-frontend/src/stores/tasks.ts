@@ -108,6 +108,22 @@ export const useTasksStore = defineStore('tasks', () => {
     })
   }
 
+  async function watchTask(id: string): Promise<Task | null> {
+    return run(async () => {
+      const response = await apiClient.post<ApiResponse<Task>>(`/tasks/${id}/watch`)
+      remember(response.data.data)
+      return response.data.data
+    })
+  }
+
+  async function unwatchTask(id: string): Promise<Task | null> {
+    return run(async () => {
+      const response = await apiClient.delete<ApiResponse<Task>>(`/tasks/${id}/watch`)
+      remember(response.data.data)
+      return response.data.data
+    })
+  }
+
   async function fetchBoardColumns(
     filters: Omit<TaskFilters, 'status'>,
   ): Promise<Record<TaskStatus, Task[]> | null> {
@@ -140,5 +156,7 @@ export const useTasksStore = defineStore('tasks', () => {
     patchTaskQuiet,
     deleteTask,
     assignTask,
+    watchTask,
+    unwatchTask,
   }
 })

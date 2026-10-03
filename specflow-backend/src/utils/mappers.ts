@@ -63,11 +63,17 @@ interface TaskSource {
   specId?: unknown
   tags?: string[]
   dueDate?: Date | string | null
+  watchers?: unknown[]
   createdAt: Date | string
   updatedAt: Date | string
 }
 
-export function mapTaskSource(value: unknown): TaskDto {
+function isWatching(watchers: unknown[] | undefined, viewerId?: string): boolean {
+  if (!viewerId || !watchers?.length) return false
+  return watchers.some((entry) => mapId(entry) === viewerId)
+}
+
+export function mapTaskSource(value: unknown, viewerId?: string): TaskDto {
   const task = value as TaskSource
   return {
     id: task.id,
@@ -80,6 +86,7 @@ export function mapTaskSource(value: unknown): TaskDto {
     specId: mapId(task.specId),
     tags: task.tags ?? [],
     dueDate: iso(task.dueDate),
+    watching: isWatching(task.watchers, viewerId),
     createdAt: iso(task.createdAt) ?? '',
     updatedAt: iso(task.updatedAt) ?? '',
   }

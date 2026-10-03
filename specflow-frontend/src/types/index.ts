@@ -27,6 +27,7 @@ export interface Task {
   specId: string | null
   tags: string[]
   dueDate: string | null
+  watching: boolean
   createdAt: string
   updatedAt: string
 }

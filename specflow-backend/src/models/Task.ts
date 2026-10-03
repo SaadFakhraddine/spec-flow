@@ -25,6 +25,7 @@ const taskSchema = new Schema(
     specId: { type: Schema.Types.ObjectId, ref: 'Spec', default: null },
     tags: { type: [String], default: [], validate: tagsValidator },
     dueDate: { type: Date, default: null },
+    watchers: { type: [{ type: Schema.Types.ObjectId, ref: 'User' }], default: [] },
   },
   { timestamps: true },
 )

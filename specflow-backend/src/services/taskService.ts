@@ -6,7 +6,7 @@ import { AppError } from '../utils/AppError'
 import { mapId, mapTaskSource } from '../utils/mappers'
 import { escapeRegex } from '../utils/pagination'
 import { recordActivity } from './activityService'
-import { notifyAssignment } from './notificationService'
+import { notifyAssignment, notifyStatusWatchers } from './notificationService'
 import { adminPatch, developerPatch } from './taskPatch'
 
 const USER_FIELDS = 'name email'
@@ -28,7 +28,7 @@ function applyDueFilter(query: Record<string, unknown>, due?: 'overdue' | 'soon'
   query.status = query.status ?? { $ne: 'done' }
 }
 
-export async function getTasks(filters: TaskFilters, pageQuery: Page) {
+export async function getTasks(filters: TaskFilters, pageQuery: Page, viewerId?: string) {
   const query: Record<string, unknown> = {}
   if (filters.status) query.status = filters.status
   if (filters.priority) query.priority = filters.priority
@@ -40,13 +40,18 @@ export async function getTasks(filters: TaskFilters, pageQuery: Page) {
     populateTask(Task.find(query).sort({ updatedAt: -1 }).skip(skip).limit(pageQuery.limit)),
     Task.countDocuments(query),
   ])
-  return { data: items.map((item) => mapTaskSource(item)), total, page: pageQuery.page, limit: pageQuery.limit }
+  return {
+    data: items.map((item) => mapTaskSource(item, viewerId)),
+    total,
+    page: pageQuery.page,
+    limit: pageQuery.limit,
+  }
 }
 
-export async function getTaskById(id: string): Promise<TaskDto> {
+export async function getTaskById(id: string, viewerId?: string): Promise<TaskDto> {
   const task = await populateTask(Task.findById(id))
   if (!task) throw new AppError('Task not found', 404)
-  return mapTaskSource(task)
+  return mapTaskSource(task, viewerId)
 }
 
 async function linkSpec(taskId: unknown, specId: string | null | undefined): Promise<void> {
@@ -76,7 +81,7 @@ export async function createTask(input: TaskInput, actor: Actor): Promise<TaskDt
     taskId: task.id,
     meta: { title: task.title },
   })
-  return getTaskById(task.id)
+  return getTaskById(task.id, actor.id)
 }
 
 export async function updateTask(id: string, input: TaskInput, actor: Actor): Promise<TaskDto> {
@@ -92,8 +97,9 @@ export async function updateTask(id: string, input: TaskInput, actor: Actor): Pr
       taskId: task.id,
       meta: { from: previousStatus, to: input.status },
     })
+    await notifyStatusWatchers(task.id, actor.id, previousStatus, input.status)
   }
-  return getTaskById(task.id)
+  return getTaskById(task.id, actor.id)
 }
 
 export async function deleteTask(id: string, actor: Actor): Promise<void> {
@@ -119,5 +125,5 @@ export async function assignTask(taskId: string, userId: string, actor: Actor): 
     meta: { userId },
   })
   await notifyAssignment(task.id, userId, actor.id, task.title)
-  return getTaskById(task.id)
+  return getTaskById(task.id, actor.id)
 }

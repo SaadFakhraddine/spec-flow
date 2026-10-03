@@ -1,5 +1,6 @@
 import type { NextFunction, Request, Response } from 'express'
 import * as taskService from '../services/taskService'
+import * as watchService from '../services/watchService'
 import type { TaskInput, TaskPriority, TaskStatus } from '../types/api.types'
 import { actorFrom } from '../utils/actor'
 import { sendData, sendPage } from '../utils/http'
@@ -21,8 +22,9 @@ function filtersFrom(req: Request) {
 
 export async function list(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
+    const actor = actorFrom(req)
     const page = { page: readPage(req.query.page), limit: readLimit(req.query.limit) }
-    const result = await taskService.getTasks(filtersFrom(req), page)
+    const result = await taskService.getTasks(filtersFrom(req), page, actor.id)
     sendPage(res, result.data, result.total, result.page, result.limit)
   } catch (error) {
     next(error)
@@ -31,7 +33,23 @@ export async function list(req: Request, res: Response, next: NextFunction): Pro
 
 export async function getOne(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    sendData(res, await taskService.getTaskById(String(req.params.id)))
+    sendData(res, await taskService.getTaskById(String(req.params.id), actorFrom(req).id))
+  } catch (error) {
+    next(error)
+  }
+}
+
+export async function watch(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    sendData(res, await watchService.watchTask(String(req.params.id), actorFrom(req)))
+  } catch (error) {
+    next(error)
+  }
+}
+
+export async function unwatch(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    sendData(res, await watchService.unwatchTask(String(req.params.id), actorFrom(req)))
   } catch (error) {
     next(error)
   }

@@ -41,3 +41,5 @@ taskRouter.get('/:id', requireAuth, validate(taskIdValidator), taskController.ge
 taskRouter.patch('/:id', requireAuth, validate(updateTaskValidator), taskController.update)
 taskRouter.delete('/:id', requireAuth, validate(taskIdValidator), taskController.remove)
 taskRouter.post('/:id/assign', requireAdmin, validate(assignTaskValidator), taskController.assign)
+taskRouter.post('/:id/watch', requireAuth, validate(taskIdValidator), taskController.watch)
+taskRouter.delete('/:id/watch', requireAuth, validate(taskIdValidator), taskController.unwatch)

@@ -23,7 +23,17 @@ const route = useRoute()
 const router = useRouter()
 const { user } = useAuth()
 const toast = useToast()
-const { selectedTask, isLoading, error, fetchTaskById, updateTask, deleteTask, assignTask } = useTasks()
+const {
+  selectedTask,
+  isLoading,
+  error,
+  fetchTaskById,
+  updateTask,
+  deleteTask,
+  assignTask,
+  watchTask,
+  unwatchTask,
+} = useTasks()
 const { users, load: loadUsers } = useUsers()
 const editing = ref(false)
 const confirming = ref(false)
@@ -91,6 +101,13 @@ async function onAssign(userId: string): Promise<void> {
   else toast.error(error.value || 'Could not assign the task')
 }
 
+async function onWatchToggle(): Promise<void> {
+  const watching = selectedTask.value?.watching
+  const updated = watching ? await unwatchTask(taskId()) : await watchTask(taskId())
+  if (updated) toast.success(watching ? 'Unwatched' : 'Watching')
+  else toast.error(error.value || 'Could not update watch')
+}
+
 async function onDelete(): Promise<void> {
   const ok = await deleteTask(taskId())
   confirming.value = false
@@ -132,6 +149,9 @@ async function onDelete(): Promise<void> {
                 @update:model-value="onAssign"
               />
             </div>
+            <Button variant="secondary" @click="onWatchToggle">
+              {{ selectedTask.watching ? 'Unwatch' : 'Watch' }}
+            </Button>
             <Button v-if="isAdmin" variant="secondary" @click="startEdit">Edit</Button>
             <Button v-if="isAdmin" variant="danger" @click="confirming = true">Delete</Button>
           </div>

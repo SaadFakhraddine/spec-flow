@@ -70,18 +70,24 @@ export async function notifyAssignment(
   })
 }
 
+function watcherIds(watchers: unknown[] | undefined): string[] {
+  if (!watchers?.length) return []
+  return watchers.map((entry) => mapId(entry)).filter((id): id is string => Boolean(id))
+}
+
 export async function notifyComment(
   taskId: string,
   actorId: string,
   preview: string,
 ): Promise<void> {
-  const task = await Task.findById(taskId).select('title assignedTo createdBy')
+  const task = await Task.findById(taskId).select('title assignedTo createdBy watchers')
   if (!task) return
   const recipients = new Set<string>()
   const assignee = mapId(task.assignedTo)
   const creator = mapId(task.createdBy)
   if (assignee) recipients.add(assignee)
   if (creator) recipients.add(creator)
+  for (const id of watcherIds(task.watchers)) recipients.add(id)
   recipients.delete(actorId)
   if (recipients.size === 0) return
   await Notification.insertMany(
@@ -89,6 +95,27 @@ export async function notifyComment(
       userId,
       type: 'comment.created',
       message: `New comment on "${task.title}": ${preview.slice(0, 80)}`,
+      taskId,
+    })),
+  )
+}
+
+export async function notifyStatusWatchers(
+  taskId: string,
+  actorId: string,
+  from: string,
+  to: string,
+): Promise<void> {
+  const task = await Task.findById(taskId).select('title watchers')
+  if (!task) return
+  const recipients = new Set(watcherIds(task.watchers))
+  recipients.delete(actorId)
+  if (recipients.size === 0) return
+  await Notification.insertMany(
+    [...recipients].map((userId) => ({
+      userId,
+      type: 'task.status',
+      message: `"${task.title}" moved from ${from} to ${to}`,
       taskId,
     })),
   )

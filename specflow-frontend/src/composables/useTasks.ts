@@ -24,5 +24,7 @@ export function useTasks() {
     patchTaskQuiet: store.patchTaskQuiet,
     deleteTask: store.deleteTask,
     assignTask: store.assignTask,
+    watchTask: store.watchTask,
+    unwatchTask: store.unwatchTask,
   }
 }
