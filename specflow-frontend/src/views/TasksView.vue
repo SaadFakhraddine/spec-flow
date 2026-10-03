@@ -16,6 +16,7 @@ import Pagination from '@/components/ui/Pagination.vue'
 import PageWrapper from '@/components/layout/PageWrapper.vue'
 import BulkActionBar from '@/components/features/BulkActionBar.vue'
 import CreateTaskDrawer from '@/components/features/CreateTaskDrawer.vue'
+import SavedFilterChips from '@/components/features/SavedFilterChips.vue'
 import TaskFilters from '@/components/features/TaskFilters.vue'
 import TaskTableRow from '@/components/features/TaskTableRow.vue'
 import TaskMobileCard from '@/components/features/TaskMobileCard.vue'
@@ -184,6 +185,7 @@ async function onCreate(input: TaskInput): Promise<void> {
       <Button v-if="isAdmin" @click="creating = true">Create task</Button>
     </template>
 
+    <SavedFilterChips :filters="filters" @apply="filters = $event" />
     <TaskFilters v-model="filters" :users="users" :is-admin="isAdmin" :current-user-id="user?.id ?? ''" />
     <div v-if="error" class="mb-4">
       <p class="text-body text-danger">{{ error }}</p>
