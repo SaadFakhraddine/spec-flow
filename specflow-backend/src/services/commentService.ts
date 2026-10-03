@@ -2,9 +2,10 @@ import { Comment } from '../models/Comment'
 import { Task } from '../models/Task'
 import type { Actor, UserRef } from '../types/api.types'
 import { AppError } from '../utils/AppError'
-import { mapUser, requireUser } from '../utils/mappers'
+import { mapId, mapUser, requireUser } from '../utils/mappers'
 import { recordActivity } from './activityService'
-import { notifyComment } from './notificationService'
+import { resolveMentions } from './mentionService'
+import { notifyComment, notifyMentions } from './notificationService'
 
 const USER_FIELDS = 'name email'
 
@@ -13,6 +14,7 @@ export interface CommentDto {
   taskId: string
   body: string
   author: UserRef
+  mentions: string[]
   createdAt: string
   updatedAt: string
 }
@@ -23,6 +25,7 @@ function toDto(doc: {
   taskId: unknown
   body: string
   authorId: unknown
+  mentions?: unknown[]
   createdAt?: Date
   updatedAt?: Date
 }): CommentDto {
@@ -33,6 +36,7 @@ function toDto(doc: {
     taskId: String(doc.taskId),
     body: doc.body,
     author: requireUser(doc.authorId, 'Comment author'),
+    mentions: (doc.mentions ?? []).map((id) => mapId(id)).filter((id): id is string => Boolean(id)),
     createdAt: createdAt.toISOString(),
     updatedAt: updatedAt.toISOString(),
   }
@@ -52,14 +56,16 @@ export async function listComments(taskId: string): Promise<CommentDto[]> {
 export async function createComment(taskId: string, body: string, actor: Actor): Promise<CommentDto> {
   await assertTask(taskId)
   const trimmed = body.trim()
-  const created = await Comment.create({ taskId, authorId: actor.id, body: trimmed })
+  const mentions = await resolveMentions(trimmed)
+  const created = await Comment.create({ taskId, authorId: actor.id, body: trimmed, mentions })
   await recordActivity({
     actorId: actor.id,
     type: 'comment.created',
     taskId,
     meta: { preview: trimmed.slice(0, 80) },
   })
-  await notifyComment(taskId, actor.id, trimmed)
+  await notifyMentions(taskId, actor.id, mentions, trimmed)
+  await notifyComment(taskId, actor.id, trimmed, mentions)
   const doc = await Comment.findById(created.id).populate('authorId', USER_FIELDS)
   if (!doc) throw new AppError('Comment not found', 404)
   return toDto(doc)

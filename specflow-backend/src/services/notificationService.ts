@@ -79,6 +79,7 @@ export async function notifyComment(
   taskId: string,
   actorId: string,
   preview: string,
+  excludeIds: string[] = [],
 ): Promise<void> {
   const task = await Task.findById(taskId).select('title assignedTo createdBy watchers')
   if (!task) return
@@ -89,6 +90,7 @@ export async function notifyComment(
   if (creator) recipients.add(creator)
   for (const id of watcherIds(task.watchers)) recipients.add(id)
   recipients.delete(actorId)
+  for (const id of excludeIds) recipients.delete(id)
   if (recipients.size === 0) return
   await Notification.insertMany(
     [...recipients].map((userId) => ({
@@ -116,6 +118,27 @@ export async function notifyStatusWatchers(
       userId,
       type: 'task.status',
       message: `"${task.title}" moved from ${from} to ${to}`,
+      taskId,
+    })),
+  )
+}
+
+export async function notifyMentions(
+  taskId: string,
+  actorId: string,
+  mentionIds: string[],
+  preview: string,
+): Promise<void> {
+  if (!mentionIds.length) return
+  const task = await Task.findById(taskId).select('title')
+  if (!task) return
+  const recipients = mentionIds.filter((id) => id !== actorId)
+  if (!recipients.length) return
+  await Notification.insertMany(
+    recipients.map((userId) => ({
+      userId,
+      type: 'mention.created',
+      message: `You were mentioned on "${task.title}": ${preview.slice(0, 80)}`,
       taskId,
     })),
   )

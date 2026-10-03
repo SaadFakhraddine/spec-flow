@@ -1,12 +1,21 @@
 import type { NextFunction, Request, Response } from 'express'
 import { listUsers } from '../services/authService'
 import { getDashboard } from '../services/dashboardService'
+import { listMentionable } from '../services/mentionService'
 import { actorFrom } from '../utils/actor'
 import { sendData } from '../utils/http'
 
 export async function users(_req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     sendData(res, await listUsers())
+  } catch (error) {
+    next(error)
+  }
+}
+
+export async function mentionable(_req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    sendData(res, await listMentionable())
   } catch (error) {
     next(error)
   }

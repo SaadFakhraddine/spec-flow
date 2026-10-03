@@ -5,6 +5,7 @@ const commentSchema = new Schema(
     taskId: { type: Schema.Types.ObjectId, ref: 'Task', required: true, index: true },
     authorId: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
     body: { type: String, required: true, trim: true, maxlength: 2000 },
+    mentions: { type: [{ type: Schema.Types.ObjectId, ref: 'User' }], default: [] },
   },
   { timestamps: true },
 )

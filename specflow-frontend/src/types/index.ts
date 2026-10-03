@@ -54,6 +54,7 @@ export interface Comment {
   taskId: string
   body: string
   author: UserRef
+  mentions: string[]
   createdAt: string
   updatedAt: string
 }

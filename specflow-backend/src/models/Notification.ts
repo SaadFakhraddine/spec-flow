@@ -5,7 +5,7 @@ const notificationSchema = new Schema(
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
     type: {
       type: String,
-      enum: ['task.assigned', 'comment.created', 'task.status'],
+      enum: ['task.assigned', 'comment.created', 'task.status', 'mention.created'],
       required: true,
     },
     message: { type: String, required: true, maxlength: 300 },
