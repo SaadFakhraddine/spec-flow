@@ -41,3 +41,10 @@ export const assignTaskValidator = [
 ]
 
 export const taskIdValidator = [param('id').isMongoId().withMessage('Invalid task id')]
+
+export const bulkTaskValidator = [
+  body('ids').isArray({ min: 1, max: 50 }).withMessage('Select between 1 and 50 tasks'),
+  body('ids.*').isMongoId().withMessage('Invalid task id'),
+  body('status').optional().isIn(TASK_STATUSES).withMessage('Invalid status'),
+  body('assignedTo').optional({ nullable: true }).isMongoId().withMessage('Invalid assignee'),
+]

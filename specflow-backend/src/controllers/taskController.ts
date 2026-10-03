@@ -1,4 +1,5 @@
 import type { NextFunction, Request, Response } from 'express'
+import * as bulkTaskService from '../services/bulkTaskService'
 import * as taskService from '../services/taskService'
 import * as watchService from '../services/watchService'
 import type { TaskInput, TaskPriority, TaskStatus } from '../types/api.types'
@@ -34,6 +35,16 @@ export async function list(req: Request, res: Response, next: NextFunction): Pro
 export async function getOne(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     sendData(res, await taskService.getTaskById(String(req.params.id), actorFrom(req).id))
+  } catch (error) {
+    next(error)
+  }
+}
+
+export async function bulk(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const body = req.body as { ids: string[]; status?: TaskStatus; assignedTo?: string | null }
+    const result = await bulkTaskService.bulkUpdateTasks(body, actorFrom(req))
+    sendData(res, result)
   } catch (error) {
     next(error)
   }

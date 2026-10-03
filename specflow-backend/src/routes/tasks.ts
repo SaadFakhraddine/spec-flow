@@ -12,6 +12,7 @@ import {
 } from '../validators/commentValidators'
 import {
   assignTaskValidator,
+  bulkTaskValidator,
   createTaskValidator,
   listTaskValidator,
   taskIdValidator,
@@ -22,6 +23,7 @@ export const taskRouter = Router()
 
 taskRouter.get('/', requireAuth, validate(listTaskValidator), taskController.list)
 taskRouter.post('/', requireAdmin, validate(createTaskValidator), taskController.create)
+taskRouter.patch('/bulk', requireAuth, validate(bulkTaskValidator), taskController.bulk)
 taskRouter.get('/:id/activity', requireAuth, validate(listCommentsValidator), activityController.listForTask)
 taskRouter.get('/:id/comments', requireAuth, validate(listCommentsValidator), commentController.list)
 taskRouter.post(

@@ -14,6 +14,7 @@ import EmptyState from '@/components/ui/EmptyState.vue'
 import LoadingSkeleton from '@/components/ui/LoadingSkeleton.vue'
 import Pagination from '@/components/ui/Pagination.vue'
 import PageWrapper from '@/components/layout/PageWrapper.vue'
+import BulkActionBar from '@/components/features/BulkActionBar.vue'
 import CreateTaskDrawer from '@/components/features/CreateTaskDrawer.vue'
 import TaskFilters from '@/components/features/TaskFilters.vue'
 import TaskTableRow from '@/components/features/TaskTableRow.vue'
@@ -27,12 +28,13 @@ const toast = useToast()
 const { users, load: loadUsers } = useUsers()
 const {
   tasks, total, currentPage, isLoading, error, filters,
-  fetchTasks, fetchBoardColumns, createTask, updateTask, patchTaskQuiet,
+  fetchTasks, fetchBoardColumns, createTask, updateTask, patchTaskQuiet, bulkUpdate,
 } = useTasks()
 
 const creating = ref(false)
 const drawerRef = ref<{ stopSaving: () => void } | null>(null)
 const board = ref<BoardColumns | null>(null)
+const selected = ref<string[]>([])
 const view = computed(() => (route.query.view === 'board' ? 'board' : 'list'))
 const isAdmin = computed(() => user.value?.role === 'admin')
 const hasFilters = computed(() =>
@@ -80,11 +82,47 @@ onMounted(() => {
   if (isAdmin.value) void loadUsers()
   load()
 })
-watch(filters, () => load(), { deep: true })
-watch(view, () => load())
+watch(filters, () => {
+  selected.value = []
+  load()
+}, { deep: true })
+watch(view, () => {
+  selected.value = []
+  load()
+})
 
 function open(id: string): void {
   void router.push(`/tasks/${id}`)
+}
+
+function toggleSelect(id: string, on: boolean): void {
+  selected.value = on ? [...new Set([...selected.value, id])] : selected.value.filter((item) => item !== id)
+}
+
+function toggleAll(on: boolean): void {
+  selected.value = on ? tasks.value.map((task) => task.id) : []
+}
+
+async function onBulkStatus(status: TaskStatus): Promise<void> {
+  const count = await bulkUpdate(selected.value, { status })
+  if (count == null) {
+    toast.error(error.value || 'Bulk update failed')
+    return
+  }
+  selected.value = []
+  toast.success(`Updated ${count} task(s)`)
+  load()
+}
+
+async function onBulkAssign(userId: string): Promise<void> {
+  const count = await bulkUpdate(selected.value, { assignedTo: userId })
+  if (count == null) {
+    toast.error(error.value || 'Bulk assign failed')
+    return
+  }
+  selected.value = []
+  toast.success(`Assigned ${count} task(s)`)
+  load()
 }
 
 async function onStatus(id: string, status: TaskStatus): Promise<void> {
@@ -174,6 +212,15 @@ async function onCreate(input: TaskInput): Promise<void> {
         <table class="sf-table">
           <thead>
             <tr>
+              <th class="w-10">
+                <input
+                  type="checkbox"
+                  class="rounded border-line"
+                  :checked="tasks.length > 0 && selected.length === tasks.length"
+                  aria-label="Select all tasks"
+                  @change="toggleAll(($event.target as HTMLInputElement).checked)"
+                />
+              </th>
               <th>Title</th>
               <th>Status</th>
               <th>Priority</th>
@@ -187,12 +234,23 @@ async function onCreate(input: TaskInput): Promise<void> {
               v-for="task in tasks"
               :key="task.id"
               :task="task"
+              :selected="selected.includes(task.id)"
               @open="open(task.id)"
               @status="onStatus(task.id, $event)"
+              @toggle="toggleSelect(task.id, $event)"
             />
           </tbody>
         </table>
       </div>
+      <BulkActionBar
+        v-if="selected.length"
+        :count="selected.length"
+        :is-admin="isAdmin"
+        :users="users"
+        @status="onBulkStatus"
+        @assign="onBulkAssign"
+        @clear="selected = []"
+      />
       <Pagination :page="currentPage" :total="total" :limit="PAGE_LIMIT" @change="loadList" />
     </template>
 

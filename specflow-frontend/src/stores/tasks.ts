@@ -108,6 +108,16 @@ export const useTasksStore = defineStore('tasks', () => {
     })
   }
 
+  async function bulkUpdate(ids: string[], patch: { status?: TaskStatus; assignedTo?: string | null }): Promise<number | null> {
+    return run(async () => {
+      const response = await apiClient.patch<ApiResponse<{ updated: number }>>('/tasks/bulk', {
+        ids,
+        ...patch,
+      })
+      return response.data.data.updated
+    })
+  }
+
   async function watchTask(id: string): Promise<Task | null> {
     return run(async () => {
       const response = await apiClient.post<ApiResponse<Task>>(`/tasks/${id}/watch`)
@@ -156,6 +166,7 @@ export const useTasksStore = defineStore('tasks', () => {
     patchTaskQuiet,
     deleteTask,
     assignTask,
+    bulkUpdate,
     watchTask,
     unwatchTask,
   }

@@ -4,8 +4,8 @@ import { formatDate } from '@/utils/format'
 import { priorityClass, taskBorder, taskStatusLabel, taskStatuses } from '@/utils/status'
 import Select from '@/components/ui/Select.vue'
 
-defineProps<{ task: Task }>()
-const emit = defineEmits<{ open: []; status: [TaskStatus] }>()
+const props = defineProps<{ task: Task; selected?: boolean }>()
+const emit = defineEmits<{ open: []; status: [TaskStatus]; toggle: [boolean] }>()
 
 const statusOptions = taskStatuses.map((value) => ({ value, label: taskStatusLabel[value] }))
 
@@ -15,7 +15,7 @@ function onStatus(value: string): void {
 
 function onRowClick(event: MouseEvent): void {
   const target = event.target as HTMLElement
-  if (target.closest('select, label')) return
+  if (target.closest('select, label, input')) return
   emit('open')
 }
 </script>
@@ -28,6 +28,15 @@ function onRowClick(event: MouseEvent): void {
     @click="onRowClick"
     @keydown.enter="emit('open')"
   >
+    <td class="px-3 py-2.5" @click.stop>
+      <input
+        type="checkbox"
+        class="rounded border-line"
+        :checked="props.selected"
+        :aria-label="`Select ${task.title}`"
+        @change="emit('toggle', ($event.target as HTMLInputElement).checked)"
+      />
+    </td>
     <td class="px-3 py-2.5 text-body">{{ task.title }}</td>
     <td class="px-3 py-2.5" @click.stop>
       <Select
