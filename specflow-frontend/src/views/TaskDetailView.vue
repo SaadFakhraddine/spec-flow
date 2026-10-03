@@ -18,6 +18,7 @@ import Input from '@/components/ui/Input.vue'
 import Textarea from '@/components/ui/Textarea.vue'
 import TaskComments from '@/components/features/TaskComments.vue'
 import ActivityTimeline from '@/components/features/ActivityTimeline.vue'
+import MarkdownBody from '@/components/ui/MarkdownBody.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -169,7 +170,10 @@ async function onDelete(): Promise<void> {
           <dl v-else class="sf-panel space-y-4 p-4 text-body" :class="taskBorder[selectedTask.status]">
             <div>
               <dt class="text-label text-muted">Description</dt>
-              <dd class="mt-1 whitespace-pre-wrap">{{ selectedTask.description || '—' }}</dd>
+              <dd class="mt-1">
+                <MarkdownBody v-if="selectedTask.description" :source="selectedTask.description" />
+                <span v-else>—</span>
+              </dd>
             </div>
             <div>
               <dt class="text-label text-muted">Priority</dt>

@@ -51,6 +51,34 @@
     @apply motion-color hover:bg-elevated/60;
   }
 
+  .sf-markdown :where(p + p) {
+    @apply mt-2;
+  }
+
+  .sf-markdown :where(ul, ol) {
+    @apply my-2 list-disc pl-5;
+  }
+
+  .sf-markdown :where(ol) {
+    @apply list-decimal;
+  }
+
+  .sf-markdown :where(code) {
+    @apply rounded bg-elevated px-1 font-mono text-label;
+  }
+
+  .sf-markdown :where(pre) {
+    @apply my-2 overflow-x-auto rounded-md bg-elevated p-3 font-mono text-label;
+  }
+
+  .sf-markdown :where(a) {
+    @apply text-primary underline;
+  }
+
+  .sf-markdown :where(blockquote) {
+    @apply border-l-2 border-line pl-3 text-muted;
+  }
+
   .sf-panel {
     @apply rounded-md border border-line bg-surface shadow-panel;
   }

@@ -13,6 +13,8 @@
   "dependencies": {
     "@vueuse/core": "^12.8.2",
     "axios": "^1.8.3",
+    "dompurify": "^3.4.16",
+    "marked": "^18.0.14",
     "pinia": "^2.3.1",
     "vue": "^3.5.13",
     "vue-router": "^4.5.0",
@@ -21,6 +23,7 @@
   "devDependencies": {
     "@playwright/test": "^1.63.0",
     "@tailwindcss/forms": "^0.5.10",
+    "@types/dompurify": "^3.0.5",
     "@types/node": "^26.6.3",
     "@vitejs/plugin-vue": "^5.2.1",
     "@vue/test-utils": "^2.4.6",

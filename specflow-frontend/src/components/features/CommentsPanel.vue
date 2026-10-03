@@ -7,6 +7,7 @@ import type { CommentResource } from '@/stores/comments'
 import { formatRelative } from '@/utils/format'
 import Button from '@/components/ui/Button.vue'
 import LoadingSkeleton from '@/components/ui/LoadingSkeleton.vue'
+import MarkdownBody from '@/components/ui/MarkdownBody.vue'
 import CommentForm from './CommentForm.vue'
 
 const props = defineProps<{ resource: CommentResource; parentId: string }>()
@@ -73,7 +74,7 @@ async function onDelete(commentId: string): Promise<void> {
             Delete
           </Button>
         </div>
-        <p class="mt-1 whitespace-pre-wrap text-body">{{ comment.body }}</p>
+        <MarkdownBody class="mt-1" :source="comment.body" />
       </li>
     </ul>
     <CommentForm ref="formRef" :submitting="submitting" @submit="onSubmit" />

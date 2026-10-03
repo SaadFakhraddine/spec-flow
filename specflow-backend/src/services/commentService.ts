@@ -10,7 +10,7 @@ import { notifyComment, notifyMentions, notifySpecComment } from './notification
 
 const USER_FIELDS = 'name email'
 
-export type CommentParent = { taskId: string; specId?: never } | { specId: string; taskId?: never }
+export type CommentParent = { kind: 'task'; taskId: string } | { kind: 'spec'; specId: string }
 
 export interface CommentDto {
   id: string
@@ -49,7 +49,7 @@ function toDto(doc: {
 }
 
 async function assertParent(parent: CommentParent): Promise<void> {
-  if ('taskId' in parent && parent.taskId) {
+  if (parent.kind === 'task') {
     if (!(await Task.exists({ _id: parent.taskId }))) throw new AppError('Task not found', 404)
     return
   }
@@ -57,7 +57,7 @@ async function assertParent(parent: CommentParent): Promise<void> {
 }
 
 function filter(parent: CommentParent): Record<string, string> {
-  return 'taskId' in parent && parent.taskId ? { taskId: parent.taskId } : { specId: parent.specId }
+  return parent.kind === 'task' ? { taskId: parent.taskId } : { specId: parent.specId }
 }
 
 export async function listComments(parent: CommentParent): Promise<CommentDto[]> {
@@ -75,15 +75,14 @@ export async function createComment(
   const trimmed = body.trim()
   const mentions = await resolveMentions(trimmed)
   const created = await Comment.create({ ...filter(parent), authorId: actor.id, body: trimmed, mentions })
-  const isTask = 'taskId' in parent
   await recordActivity({
     actorId: actor.id,
     type: 'comment.created',
-    taskId: isTask ? parent.taskId : undefined,
-    specId: isTask ? undefined : parent.specId,
+    taskId: parent.kind === 'task' ? parent.taskId : undefined,
+    specId: parent.kind === 'spec' ? parent.specId : undefined,
     meta: { preview: trimmed.slice(0, 80) },
   })
-  if (isTask) {
+  if (parent.kind === 'task') {
     await notifyMentions(parent.taskId, actor.id, mentions, trimmed)
     await notifyComment(parent.taskId, actor.id, trimmed, mentions)
   } else {

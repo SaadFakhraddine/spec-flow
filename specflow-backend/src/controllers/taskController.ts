@@ -2,7 +2,7 @@ import type { NextFunction, Request, Response } from 'express'
 import * as bulkTaskService from '../services/bulkTaskService'
 import * as taskService from '../services/taskService'
 import * as watchService from '../services/watchService'
-import type { TaskInput, TaskPriority, TaskStatus } from '../types/api.types'
+import type { DueFilter, TaskInput, TaskPriority, TaskStatus } from '../types/api.types'
 import { actorFrom } from '../utils/actor'
 import { sendData, sendPage } from '../utils/http'
 import { isTaskPriority, isTaskStatus } from '../utils/mappers'
@@ -17,7 +17,7 @@ function filtersFrom(req: Request) {
     priority: priority && isTaskPriority(priority) ? priority as TaskPriority : undefined,
     assignedTo: readText(req.query.assignedTo),
     q: readText(req.query.q),
-    due: due === 'overdue' || due === 'soon' ? due : undefined,
+    due: due === 'overdue' || due === 'soon' ? (due as DueFilter) : undefined,
   }
 }
 
