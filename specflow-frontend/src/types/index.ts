@@ -51,7 +51,8 @@ export interface Spec {
 
 export interface Comment {
   id: string
-  taskId: string
+  taskId: string | null
+  specId: string | null
   body: string
   author: UserRef
   mentions: string[]
@@ -81,6 +82,7 @@ export interface AppNotification {
   type: string
   message: string
   taskId: string | null
+  specId: string | null
   readAt: string | null
   createdAt: string
 }

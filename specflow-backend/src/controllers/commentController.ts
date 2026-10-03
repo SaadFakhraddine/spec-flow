@@ -5,7 +5,7 @@ import { sendData } from '../utils/http'
 
 export async function list(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    sendData(res, await commentService.listComments(String(req.params.id)))
+    sendData(res, await commentService.listComments({ taskId: String(req.params.id) }))
   } catch (error) {
     next(error)
   }
@@ -14,7 +14,11 @@ export async function list(req: Request, res: Response, next: NextFunction): Pro
 export async function create(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const body = String((req.body as { body: string }).body)
-    const comment = await commentService.createComment(String(req.params.id), body, actorFrom(req))
+    const comment = await commentService.createComment(
+      { taskId: String(req.params.id) },
+      body,
+      actorFrom(req),
+    )
     sendData(res, comment, 201)
   } catch (error) {
     next(error)
@@ -23,7 +27,46 @@ export async function create(req: Request, res: Response, next: NextFunction): P
 
 export async function remove(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    await commentService.deleteComment(String(req.params.id), String(req.params.commentId), actorFrom(req))
+    await commentService.deleteComment(
+      { taskId: String(req.params.id) },
+      String(req.params.commentId),
+      actorFrom(req),
+    )
+    sendData(res, null)
+  } catch (error) {
+    next(error)
+  }
+}
+
+export async function listForSpec(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    sendData(res, await commentService.listComments({ specId: String(req.params.id) }))
+  } catch (error) {
+    next(error)
+  }
+}
+
+export async function createForSpec(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const body = String((req.body as { body: string }).body)
+    const comment = await commentService.createComment(
+      { specId: String(req.params.id) },
+      body,
+      actorFrom(req),
+    )
+    sendData(res, comment, 201)
+  } catch (error) {
+    next(error)
+  }
+}
+
+export async function removeForSpec(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    await commentService.deleteComment(
+      { specId: String(req.params.id) },
+      String(req.params.commentId),
+      actorFrom(req),
+    )
     sendData(res, null)
   } catch (error) {
     next(error)

@@ -10,6 +10,7 @@ const notificationSchema = new Schema(
     },
     message: { type: String, required: true, maxlength: 300 },
     taskId: { type: Schema.Types.ObjectId, ref: 'Task', default: null },
+    specId: { type: Schema.Types.ObjectId, ref: 'Spec', default: null },
     readAt: { type: Date, default: null },
   },
   { timestamps: { createdAt: true, updatedAt: false } },

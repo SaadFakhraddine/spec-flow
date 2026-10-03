@@ -1,17 +1,21 @@
 import { Comment } from '../models/Comment'
+import { Spec } from '../models/Spec'
 import { Task } from '../models/Task'
 import type { Actor, UserRef } from '../types/api.types'
 import { AppError } from '../utils/AppError'
 import { mapId, mapUser, requireUser } from '../utils/mappers'
 import { recordActivity } from './activityService'
 import { resolveMentions } from './mentionService'
-import { notifyComment, notifyMentions } from './notificationService'
+import { notifyComment, notifyMentions, notifySpecComment } from './notificationService'
 
 const USER_FIELDS = 'name email'
 
+export type CommentParent = { taskId: string; specId?: never } | { specId: string; taskId?: never }
+
 export interface CommentDto {
   id: string
-  taskId: string
+  taskId: string | null
+  specId: string | null
   body: string
   author: UserRef
   mentions: string[]
@@ -22,7 +26,8 @@ export interface CommentDto {
 function toDto(doc: {
   _id: unknown
   id?: string
-  taskId: unknown
+  taskId?: unknown
+  specId?: unknown
   body: string
   authorId: unknown
   mentions?: unknown[]
@@ -33,7 +38,8 @@ function toDto(doc: {
   const updatedAt = doc.updatedAt instanceof Date ? doc.updatedAt : createdAt
   return {
     id: doc.id ?? String(doc._id),
-    taskId: String(doc.taskId),
+    taskId: doc.taskId ? String(doc.taskId) : null,
+    specId: doc.specId ? String(doc.specId) : null,
     body: doc.body,
     author: requireUser(doc.authorId, 'Comment author'),
     mentions: (doc.mentions ?? []).map((id) => mapId(id)).filter((id): id is string => Boolean(id)),
@@ -42,41 +48,65 @@ function toDto(doc: {
   }
 }
 
-async function assertTask(taskId: string): Promise<void> {
-  const exists = await Task.exists({ _id: taskId })
-  if (!exists) throw new AppError('Task not found', 404)
+async function assertParent(parent: CommentParent): Promise<void> {
+  if ('taskId' in parent && parent.taskId) {
+    if (!(await Task.exists({ _id: parent.taskId }))) throw new AppError('Task not found', 404)
+    return
+  }
+  if (!(await Spec.exists({ _id: parent.specId }))) throw new AppError('Spec not found', 404)
 }
 
-export async function listComments(taskId: string): Promise<CommentDto[]> {
-  await assertTask(taskId)
-  const docs = await Comment.find({ taskId }).sort({ createdAt: 1 }).populate('authorId', USER_FIELDS)
+function filter(parent: CommentParent): Record<string, string> {
+  return 'taskId' in parent && parent.taskId ? { taskId: parent.taskId } : { specId: parent.specId }
+}
+
+export async function listComments(parent: CommentParent): Promise<CommentDto[]> {
+  await assertParent(parent)
+  const docs = await Comment.find(filter(parent)).sort({ createdAt: 1 }).populate('authorId', USER_FIELDS)
   return docs.map((doc) => toDto(doc))
 }
 
-export async function createComment(taskId: string, body: string, actor: Actor): Promise<CommentDto> {
-  await assertTask(taskId)
+export async function createComment(
+  parent: CommentParent,
+  body: string,
+  actor: Actor,
+): Promise<CommentDto> {
+  await assertParent(parent)
   const trimmed = body.trim()
   const mentions = await resolveMentions(trimmed)
-  const created = await Comment.create({ taskId, authorId: actor.id, body: trimmed, mentions })
+  const created = await Comment.create({ ...filter(parent), authorId: actor.id, body: trimmed, mentions })
+  const isTask = 'taskId' in parent
   await recordActivity({
     actorId: actor.id,
     type: 'comment.created',
-    taskId,
+    taskId: isTask ? parent.taskId : undefined,
+    specId: isTask ? undefined : parent.specId,
     meta: { preview: trimmed.slice(0, 80) },
   })
-  await notifyMentions(taskId, actor.id, mentions, trimmed)
-  await notifyComment(taskId, actor.id, trimmed, mentions)
+  if (isTask) {
+    await notifyMentions(parent.taskId, actor.id, mentions, trimmed)
+    await notifyComment(parent.taskId, actor.id, trimmed, mentions)
+  } else {
+    await notifyMentions(parent.specId, actor.id, mentions, trimmed, 'spec')
+    await notifySpecComment(parent.specId, actor.id, trimmed, mentions)
+  }
   const doc = await Comment.findById(created.id).populate('authorId', USER_FIELDS)
   if (!doc) throw new AppError('Comment not found', 404)
   return toDto(doc)
 }
 
-export async function deleteComment(taskId: string, commentId: string, actor: Actor): Promise<void> {
-  const comment = await Comment.findOne({ _id: commentId, taskId }).populate('authorId', USER_FIELDS)
+export async function deleteComment(
+  parent: CommentParent,
+  commentId: string,
+  actor: Actor,
+): Promise<void> {
+  const comment = await Comment.findOne({ _id: commentId, ...filter(parent) }).populate(
+    'authorId',
+    USER_FIELDS,
+  )
   if (!comment) throw new AppError('Comment not found', 404)
   const author = mapUser(comment.authorId)
-  const isOwner = author?.id === actor.id
-  if (!isOwner && actor.role !== 'admin') {
+  if (author?.id !== actor.id && actor.role !== 'admin') {
     throw new AppError('You can only delete your own comments', 403)
   }
   await comment.deleteOne()

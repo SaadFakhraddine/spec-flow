@@ -1,7 +1,14 @@
 import { Router } from 'express'
+import * as commentController from '../controllers/commentController'
 import * as specController from '../controllers/specController'
 import { requireAdmin, requireAuth } from '../middleware/auth'
+import { commentRateLimiter } from '../middleware/rateLimiter'
 import { validate } from '../middleware/validate'
+import {
+  createCommentValidator,
+  deleteCommentValidator,
+  listCommentsValidator,
+} from '../validators/commentValidators'
 import {
   createSpecValidator,
   linkTaskValidator,
@@ -17,3 +24,22 @@ specRouter.get('/:id', requireAuth, validate(specIdValidator), specController.ge
 specRouter.post('/', requireAdmin, validate(createSpecValidator), specController.create)
 specRouter.patch('/:id', requireAdmin, validate(updateSpecValidator), specController.update)
 specRouter.post('/:id/tasks', requireAdmin, validate(linkTaskValidator), specController.linkTask)
+specRouter.get(
+  '/:id/comments',
+  requireAuth,
+  validate(listCommentsValidator),
+  commentController.listForSpec,
+)
+specRouter.post(
+  '/:id/comments',
+  requireAuth,
+  commentRateLimiter,
+  validate(createCommentValidator),
+  commentController.createForSpec,
+)
+specRouter.delete(
+  '/:id/comments/:commentId',
+  requireAuth,
+  validate(deleteCommentValidator),
+  commentController.removeForSpec,
+)

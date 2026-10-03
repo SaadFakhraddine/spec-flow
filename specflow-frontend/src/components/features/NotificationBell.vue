@@ -18,10 +18,11 @@ function toggle(): void {
   open.value = !open.value
 }
 
-async function openItem(id: string, taskId: string | null): Promise<void> {
+async function openItem(id: string, taskId: string | null, specId: string | null): Promise<void> {
   await markRead(id)
   close()
   if (taskId) await router.push(`/tasks/${taskId}`)
+  else if (specId) await router.push(`/specs/${specId}`)
 }
 
 function onDocumentClick(event: MouseEvent): void {
@@ -81,7 +82,7 @@ onBeforeUnmount(() => {
             type="button"
             class="w-full rounded-md px-2 py-2 text-left motion-color hover:bg-elevated"
             :class="item.readAt ? 'text-muted' : 'text-text'"
-            @click="openItem(item.id, item.taskId)"
+            @click="openItem(item.id, item.taskId, item.specId)"
           >
             <p class="text-body">{{ item.message }}</p>
             <p class="mt-0.5 font-mono text-label text-muted">{{ formatRelative(item.createdAt) }}</p>

@@ -11,6 +11,7 @@ import Button from '@/components/ui/Button.vue'
 import LoadingSkeleton from '@/components/ui/LoadingSkeleton.vue'
 import Select from '@/components/ui/Select.vue'
 import PageWrapper from '@/components/layout/PageWrapper.vue'
+import CommentsPanel from '@/components/features/CommentsPanel.vue'
 import LinkTaskModal from '@/components/features/LinkTaskModal.vue'
 import SpecEditor from '@/components/features/SpecEditor.vue'
 import SpecSection from '@/components/features/SpecSection.vue'
@@ -141,6 +142,9 @@ async function link(taskId: string): Promise<void> {
         <p v-else class="sf-chip bg-elevated text-text">{{ specStatusLabel[selectedSpec.status] }}</p>
         <p class="text-label text-muted">Created by {{ selectedSpec.createdBy.name }}</p>
       </aside>
+      <div class="lg:col-span-2">
+        <CommentsPanel resource="specs" :parent-id="selectedSpec.id" />
+      </div>
     </div>
     <LinkTaskModal
       v-if="linking && selectedSpec"

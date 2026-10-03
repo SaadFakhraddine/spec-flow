@@ -1,4 +1,5 @@
 import { Notification } from '../models/Notification'
+import { Spec } from '../models/Spec'
 import { Task } from '../models/Task'
 import type { Actor } from '../types/api.types'
 import { AppError } from '../utils/AppError'
@@ -9,6 +10,7 @@ export interface NotificationDto {
   type: string
   message: string
   taskId: string | null
+  specId: string | null
   readAt: string | null
   createdAt: string
 }
@@ -19,6 +21,7 @@ function toDto(doc: {
   type: string
   message: string
   taskId?: unknown
+  specId?: unknown
   readAt?: Date | null
   createdAt?: Date
 }): NotificationDto {
@@ -27,6 +30,7 @@ function toDto(doc: {
     type: doc.type,
     message: doc.message,
     taskId: doc.taskId ? String(doc.taskId) : null,
+    specId: doc.specId ? String(doc.specId) : null,
     readAt: doc.readAt ? doc.readAt.toISOString() : null,
     createdAt: (doc.createdAt ?? new Date()).toISOString(),
   }
@@ -124,22 +128,45 @@ export async function notifyStatusWatchers(
 }
 
 export async function notifyMentions(
-  taskId: string,
+  parentId: string,
   actorId: string,
   mentionIds: string[],
   preview: string,
+  kind: 'task' | 'spec' = 'task',
 ): Promise<void> {
   if (!mentionIds.length) return
-  const task = await Task.findById(taskId).select('title')
-  if (!task) return
+  const title =
+    kind === 'task'
+      ? (await Task.findById(parentId).select('title'))?.title
+      : (await Spec.findById(parentId).select('title'))?.title
+  if (!title) return
   const recipients = mentionIds.filter((id) => id !== actorId)
   if (!recipients.length) return
   await Notification.insertMany(
     recipients.map((userId) => ({
       userId,
       type: 'mention.created',
-      message: `You were mentioned on "${task.title}": ${preview.slice(0, 80)}`,
-      taskId,
+      message: `You were mentioned on "${title}": ${preview.slice(0, 80)}`,
+      taskId: kind === 'task' ? parentId : null,
+      specId: kind === 'spec' ? parentId : null,
     })),
   )
+}
+
+export async function notifySpecComment(
+  specId: string,
+  actorId: string,
+  preview: string,
+  excludeIds: string[] = [],
+): Promise<void> {
+  const spec = await Spec.findById(specId).select('title createdBy')
+  if (!spec) return
+  const creator = mapId(spec.createdBy)
+  if (!creator || creator === actorId || excludeIds.includes(creator)) return
+  await Notification.create({
+    userId: creator,
+    type: 'comment.created',
+    message: `New comment on "${spec.title}": ${preview.slice(0, 80)}`,
+    specId,
+  })
 }
