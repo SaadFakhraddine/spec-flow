@@ -2,6 +2,7 @@
 import { watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
+import NotificationBell from '@/components/features/NotificationBell.vue'
 
 defineProps<{ open: boolean }>()
 const emit = defineEmits<{ close: [] }>()
@@ -72,6 +73,7 @@ watch(
       </RouterLink>
     </nav>
     <div class="mt-auto border-t border-line pt-4">
+      <NotificationBell />
       <p class="truncate px-2 text-body">{{ user?.name }}</p>
       <span class="sf-chip ml-2 mt-1 bg-elevated text-primary">{{ user?.role }}</span>
       <button

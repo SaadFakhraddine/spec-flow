@@ -74,6 +74,15 @@ export interface ActivityItem {
   createdAt: string
 }
 
+export interface AppNotification {
+  id: string
+  type: string
+  message: string
+  taskId: string | null
+  readAt: string | null
+  createdAt: string
+}
+
 export interface ApiResponse<T> {
   success: boolean
   data: T

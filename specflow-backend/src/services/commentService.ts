@@ -4,6 +4,7 @@ import type { Actor, UserRef } from '../types/api.types'
 import { AppError } from '../utils/AppError'
 import { mapUser, requireUser } from '../utils/mappers'
 import { recordActivity } from './activityService'
+import { notifyComment } from './notificationService'
 
 const USER_FIELDS = 'name email'
 
@@ -50,13 +51,15 @@ export async function listComments(taskId: string): Promise<CommentDto[]> {
 
 export async function createComment(taskId: string, body: string, actor: Actor): Promise<CommentDto> {
   await assertTask(taskId)
-  const created = await Comment.create({ taskId, authorId: actor.id, body: body.trim() })
+  const trimmed = body.trim()
+  const created = await Comment.create({ taskId, authorId: actor.id, body: trimmed })
   await recordActivity({
     actorId: actor.id,
     type: 'comment.created',
     taskId,
-    meta: { preview: body.trim().slice(0, 80) },
+    meta: { preview: trimmed.slice(0, 80) },
   })
+  await notifyComment(taskId, actor.id, trimmed)
   const doc = await Comment.findById(created.id).populate('authorId', USER_FIELDS)
   if (!doc) throw new AppError('Comment not found', 404)
   return toDto(doc)

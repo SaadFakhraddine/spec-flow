@@ -6,6 +6,7 @@ import { AppError } from '../utils/AppError'
 import { mapId, mapTaskSource } from '../utils/mappers'
 import { escapeRegex } from '../utils/pagination'
 import { recordActivity } from './activityService'
+import { notifyAssignment } from './notificationService'
 import { adminPatch, developerPatch } from './taskPatch'
 
 const USER_FIELDS = 'name email'
@@ -103,5 +104,6 @@ export async function assignTask(taskId: string, userId: string, actor: Actor): 
     taskId: task.id,
     meta: { userId },
   })
+  await notifyAssignment(task.id, userId, actor.id, task.title)
   return getTaskById(task.id)
 }

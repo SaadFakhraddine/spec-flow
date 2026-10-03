@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import { authRouter } from './auth'
+import { notificationRouter } from './notifications'
 import { dashboardRouter, userRouter } from './users'
 import { specRouter } from './specs'
 import { taskRouter } from './tasks'
@@ -11,3 +12,4 @@ apiRouter.use('/tasks', taskRouter)
 apiRouter.use('/specs', specRouter)
 apiRouter.use('/users', userRouter)
 apiRouter.use('/dashboard', dashboardRouter)
+apiRouter.use('/notifications', notificationRouter)
