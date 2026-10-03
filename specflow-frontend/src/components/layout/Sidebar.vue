@@ -42,7 +42,7 @@ watch(
   />
   <aside
     id="app-sidebar"
-    class="fixed inset-y-0 left-0 z-50 flex w-56 shrink-0 flex-col border-r border-line bg-surface px-3 py-5 shadow-panel motion-color md:static md:z-0 md:w-52 md:translate-x-0 md:shadow-none"
+    class="fixed inset-y-0 left-0 z-50 flex w-56 shrink-0 flex-col overflow-visible border-r border-line bg-surface px-3 py-5 shadow-panel motion-color md:static md:z-30 md:w-52 md:translate-x-0 md:shadow-none"
     :class="open ? 'translate-x-0' : '-translate-x-full md:translate-x-0'"
   >
     <div class="flex items-start justify-between gap-2 px-2">
