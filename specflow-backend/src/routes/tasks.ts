@@ -1,4 +1,5 @@
 import { Router } from 'express'
+import * as activityController from '../controllers/activityController'
 import * as commentController from '../controllers/commentController'
 import * as taskController from '../controllers/taskController'
 import { requireAdmin, requireAuth } from '../middleware/auth'
@@ -21,6 +22,7 @@ export const taskRouter = Router()
 
 taskRouter.get('/', requireAuth, validate(listTaskValidator), taskController.list)
 taskRouter.post('/', requireAdmin, validate(createTaskValidator), taskController.create)
+taskRouter.get('/:id/activity', requireAuth, validate(listCommentsValidator), activityController.listForTask)
 taskRouter.get('/:id/comments', requireAuth, validate(listCommentsValidator), commentController.list)
 taskRouter.post(
   '/:id/comments',

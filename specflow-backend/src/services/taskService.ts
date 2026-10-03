@@ -5,6 +5,7 @@ import { assertAdmin } from '../utils/actor'
 import { AppError } from '../utils/AppError'
 import { mapId, mapTaskSource } from '../utils/mappers'
 import { escapeRegex } from '../utils/pagination'
+import { recordActivity } from './activityService'
 import { adminPatch, developerPatch } from './taskPatch'
 
 const USER_FIELDS = 'name email'
@@ -54,14 +55,29 @@ export async function createTask(input: TaskInput, actor: Actor): Promise<TaskDt
     dueDate: input.dueDate ? new Date(input.dueDate) : null,
   })
   await linkSpec(task._id, input.specId)
+  await recordActivity({
+    actorId: actor.id,
+    type: 'task.created',
+    taskId: task.id,
+    meta: { title: task.title },
+  })
   return getTaskById(task.id)
 }
 
 export async function updateTask(id: string, input: TaskInput, actor: Actor): Promise<TaskDto> {
   const task = await Task.findById(id)
   if (!task) throw new AppError('Task not found', 404)
+  const previousStatus = task.status
   task.set(actor.role === 'admin' ? adminPatch(input) : developerPatch(input))
   await task.save()
+  if (input.status && input.status !== previousStatus) {
+    await recordActivity({
+      actorId: actor.id,
+      type: 'task.status',
+      taskId: task.id,
+      meta: { from: previousStatus, to: input.status },
+    })
+  }
   return getTaskById(task.id)
 }
 
@@ -81,5 +97,11 @@ export async function assignTask(taskId: string, userId: string, actor: Actor): 
   if (!task) throw new AppError('Task not found', 404)
   task.set('assignedTo', userId)
   await task.save()
+  await recordActivity({
+    actorId: actor.id,
+    type: 'task.assigned',
+    taskId: task.id,
+    meta: { userId },
+  })
   return getTaskById(task.id)
 }

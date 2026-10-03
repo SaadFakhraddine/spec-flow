@@ -17,6 +17,7 @@ import PageWrapper from '@/components/layout/PageWrapper.vue'
 import Input from '@/components/ui/Input.vue'
 import Textarea from '@/components/ui/Textarea.vue'
 import TaskComments from '@/components/features/TaskComments.vue'
+import ActivityTimeline from '@/components/features/ActivityTimeline.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -176,7 +177,10 @@ async function onDelete(): Promise<void> {
             </div>
           </dl>
         </div>
-        <TaskComments :task-id="selectedTask.id" />
+        <div class="space-y-4">
+          <TaskComments :task-id="selectedTask.id" />
+          <ActivityTimeline :task-id="selectedTask.id" />
+        </div>
       </div>
     </template>
     <ConfirmDialog

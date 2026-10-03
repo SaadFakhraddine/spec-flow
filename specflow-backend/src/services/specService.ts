@@ -5,6 +5,7 @@ import { assertAdmin } from '../utils/actor'
 import { AppError } from '../utils/AppError'
 import { mapSpecSource, mapTaskSource } from '../utils/mappers'
 import { escapeRegex } from '../utils/pagination'
+import { recordActivity } from './activityService'
 
 const USER_FIELDS = 'name email'
 
@@ -55,8 +56,17 @@ export async function updateSpec(id: string, input: Partial<SpecInput>, actor: A
   assertAdmin(actor)
   const spec = await Spec.findById(id)
   if (!spec) throw new AppError('Spec not found', 404)
+  const previousStatus = spec.status
   spec.set(input)
   await spec.save()
+  if (input.status && input.status !== previousStatus) {
+    await recordActivity({
+      actorId: actor.id,
+      type: 'spec.status',
+      specId: spec.id,
+      meta: { from: previousStatus, to: input.status, title: spec.title },
+    })
+  }
   return getSpecById(spec.id)
 }
 

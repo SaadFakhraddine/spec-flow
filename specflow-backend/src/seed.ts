@@ -34,7 +34,12 @@ async function ensureSample(adminId: string, developerId: string): Promise<void>
       .map((task) => task._id)
     await spec.save()
   }
-  await writeComments(adminId, developerId, taskDocs, payload.comments)
+  await writeComments(
+    adminId,
+    developerId,
+    taskDocs.map((task) => ({ id: String(task._id), title: task.title })),
+    payload.comments,
+  )
 }
 
 async function writeComments(

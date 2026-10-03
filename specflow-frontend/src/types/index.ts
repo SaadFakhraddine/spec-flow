@@ -57,6 +57,23 @@ export interface Comment {
   updatedAt: string
 }
 
+export type ActivityType =
+  | 'task.created'
+  | 'task.status'
+  | 'task.assigned'
+  | 'comment.created'
+  | 'spec.status'
+
+export interface ActivityItem {
+  id: string
+  type: ActivityType
+  taskId: string | null
+  specId: string | null
+  meta: Record<string, unknown>
+  actor: UserRef
+  createdAt: string
+}
+
 export interface ApiResponse<T> {
   success: boolean
   data: T
