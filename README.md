@@ -1,5 +1,7 @@
 # SpecFlow
 
+[![CI](https://github.com/SaadFakhraddine/spec-flow/actions/workflows/ci.yml/badge.svg)](https://github.com/SaadFakhraddine/spec-flow/actions/workflows/ci.yml)
+
 Internal tool for feature requests, technical specifications, and the tasks that fall out of them. Admins write specs and assign work. Developers move tasks through the pipeline.
 
 ## Stack
