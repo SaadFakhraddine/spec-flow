@@ -1,7 +1,10 @@
 <script setup lang="ts">
+import { watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
 
+defineProps<{ open: boolean }>()
+const emit = defineEmits<{ close: [] }>()
 const route = useRoute()
 const router = useRouter()
 const { user, logout } = useAuth()
@@ -19,15 +22,41 @@ function active(path: string): boolean {
 
 async function signOut(): Promise<void> {
   await logout()
+  emit('close')
   await router.push('/login')
 }
+
+watch(
+  () => route.fullPath,
+  () => emit('close'),
+)
 </script>
 
 <template>
-  <aside class="flex w-52 shrink-0 flex-col border-r border-line bg-surface/80 px-3 py-5 backdrop-blur">
-    <div class="px-2">
-      <p class="font-mono text-section font-semibold tracking-tight text-primary">SpecFlow</p>
-      <p class="mt-0.5 text-label text-muted">Specs to shipping</p>
+  <div
+    class="fixed inset-0 z-40 bg-background/70 md:hidden"
+    :class="open ? 'block' : 'hidden'"
+    aria-hidden="true"
+    @click="emit('close')"
+  />
+  <aside
+    id="app-sidebar"
+    class="fixed inset-y-0 left-0 z-50 flex w-56 shrink-0 flex-col border-r border-line bg-surface px-3 py-5 shadow-panel motion-color md:static md:z-0 md:w-52 md:translate-x-0 md:shadow-none"
+    :class="open ? 'translate-x-0' : '-translate-x-full md:translate-x-0'"
+  >
+    <div class="flex items-start justify-between gap-2 px-2">
+      <div>
+        <p class="font-mono text-section font-semibold tracking-tight text-primary">SpecFlow</p>
+        <p class="mt-0.5 text-label text-muted">Specs to shipping</p>
+      </div>
+      <button
+        type="button"
+        class="rounded-md px-2 py-1 text-body text-muted md:hidden"
+        aria-label="Close menu"
+        @click="emit('close')"
+      >
+        Close
+      </button>
     </div>
     <nav class="mt-8 flex flex-col gap-0.5" aria-label="Primary">
       <RouterLink

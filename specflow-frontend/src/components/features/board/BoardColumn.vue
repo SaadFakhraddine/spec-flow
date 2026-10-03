@@ -18,7 +18,7 @@ function onDrop(event: DragEvent, status: TaskStatus): void {
 
 <template>
   <section
-    class="flex min-h-[20rem] min-w-[16rem] flex-1 flex-col rounded-md border border-line bg-surface/50"
+    class="flex min-h-[16rem] w-[78vw] max-w-[18rem] shrink-0 flex-col rounded-md border border-line bg-surface/50 sm:min-w-[14rem] sm:w-auto sm:max-w-none sm:flex-1"
     @dragover.prevent
     @drop.prevent="onDrop($event, status)"
   >

@@ -17,6 +17,7 @@ import PageWrapper from '@/components/layout/PageWrapper.vue'
 import CreateTaskDrawer from '@/components/features/CreateTaskDrawer.vue'
 import TaskFilters from '@/components/features/TaskFilters.vue'
 import TaskTableRow from '@/components/features/TaskTableRow.vue'
+import TaskMobileCard from '@/components/features/TaskMobileCard.vue'
 import TaskBoard from '@/components/features/board/TaskBoard.vue'
 
 const route = useRoute()
@@ -153,7 +154,16 @@ async function onCreate(input: TaskInput): Promise<void> {
       >
         <Button v-if="isAdmin && !hasFilters" @click="creating = true">Create the first task</Button>
       </EmptyState>
-      <div v-else class="sf-panel overflow-hidden">
+      <div v-else class="space-y-2 md:hidden">
+        <TaskMobileCard
+          v-for="task in tasks"
+          :key="task.id"
+          :task="task"
+          @open="open(task.id)"
+          @status="onStatus(task.id, $event)"
+        />
+      </div>
+      <div v-if="total > 0" class="hidden overflow-hidden sf-panel md:block">
         <table class="sf-table">
           <thead>
             <tr>
