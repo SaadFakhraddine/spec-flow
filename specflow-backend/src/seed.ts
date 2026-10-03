@@ -4,105 +4,63 @@ import { Comment } from './models/Comment'
 import { Spec } from './models/Spec'
 import { Task } from './models/Task'
 import { User } from './models/User'
-
-const ACCOUNTS = [
-  { name: 'SpecFlow Admin', email: 'admin@specflow.dev', password: 'Admin1234!', role: 'admin' as const },
-  { name: 'SpecFlow Dev', email: 'dev@specflow.dev', password: 'Dev12345!', role: 'developer' as const },
-]
+import { SEED_ACCOUNTS, buildSeedPayload } from './seedData'
 
 async function ensureUsers() {
   const created = []
-  for (const account of ACCOUNTS) {
+  for (const account of SEED_ACCOUNTS) {
     const existing = await User.findOne({ email: account.email })
-    if (existing) {
-      created.push(existing)
-      continue
-    }
-    created.push(await User.create(account))
+    created.push(existing ?? (await User.create(account)))
   }
   return { admin: created[0], developer: created[1] }
 }
 
 async function ensureSample(adminId: string, developerId: string): Promise<void> {
   if ((await Task.countDocuments()) > 0) return
-  const spec = await Spec.create({
-    title: 'Refresh token rotation',
-    businessGoal: 'Keep sessions short-lived without forcing people to sign in every fifteen minutes.',
-    technicalApproach: 'Issue a 15 minute access token and rotate a 7 day refresh token stored in an httpOnly cookie.',
-    apiDesign: 'POST /auth/login, POST /auth/refresh, POST /auth/logout. Refresh reads the cookie and returns a new access token.',
-    edgeCases: ['Reuse of a rotated refresh token is rejected.', 'Logout increments the token version.'],
-    acceptanceCriteria: ['Access tokens expire in 15 minutes.', 'Refresh tokens are not readable from JavaScript.'],
-    regressionRisks: 'A bad cookie domain would sign every user out on deploy.',
-    status: 'in-review',
-    createdBy: adminId,
-    tasks: [],
-  })
-  const tasks = await Task.create([
-    {
-      title: 'Store refresh tokens in httpOnly cookies',
-      description: 'Stop writing session secrets to localStorage.',
-      status: 'done',
-      priority: 'high',
-      assignedTo: developerId,
-      createdBy: adminId,
-      specId: spec.id,
-      tags: ['auth'],
-    },
-    {
-      title: 'Reject reused refresh tokens',
-      description: 'Increment tokenVersion on every refresh and logout.',
-      status: 'in-progress',
-      priority: 'critical',
-      assignedTo: developerId,
-      createdBy: adminId,
-      specId: spec.id,
-      tags: ['auth', 'security'],
-    },
-    {
-      title: 'Document demo accounts',
-      description: 'Add the seeded admin and developer to the README.',
-      status: 'backlog',
-      priority: 'low',
-      assignedTo: null,
-      createdBy: adminId,
-      tags: ['docs'],
-    },
-  ])
-  spec.tasks = tasks.filter((task) => task.specId).map((task) => task._id)
-  await spec.save()
-  const first = tasks[0]
-  if (first) {
-    await Comment.create([
-      {
-        taskId: first.id,
-        authorId: adminId,
-        body: 'Cookie path and Secure flags are set for production cross-site use.',
-      },
-      {
-        taskId: first.id,
-        authorId: developerId,
-        body: 'Verified the refresh call does not go through the axios interceptor.',
-      },
-    ])
+  const payload = buildSeedPayload(adminId, developerId)
+  const specs = await Spec.create(payload.specs)
+  const taskDocs = await Task.create(
+    payload.tasks.map((task) => {
+      const { specIndex, ...fields } = task
+      const spec = specs[specIndex]
+      return { ...fields, specId: spec?.id ?? null }
+    }),
+  )
+  for (let index = 0; index < specs.length; index += 1) {
+    const spec = specs[index]
+    if (!spec) continue
+    spec.tasks = taskDocs
+      .filter((task) => task.specId && String(task.specId) === String(spec._id))
+      .map((task) => task._id)
+    await spec.save()
   }
+  await writeComments(adminId, developerId, taskDocs, payload.comments)
+}
+
+async function writeComments(
+  adminId: string,
+  developerId: string,
+  tasks: { id: string; title: string }[],
+  comments: ReturnType<typeof buildSeedPayload>['comments'],
+): Promise<void> {
+  const byTitle = new Map(tasks.map((task) => [task.title, task.id]))
+  const docs = comments.flatMap((comment) => {
+    const taskId = byTitle.get(comment.taskTitle)
+    if (!taskId) return []
+    return [{
+      taskId,
+      authorId: comment.author === 'admin' ? adminId : developerId,
+      body: comment.body,
+    }]
+  })
+  if (docs.length > 0) await Comment.create(docs)
 }
 
 async function ensureComments(adminId: string, developerId: string): Promise<void> {
   if ((await Comment.countDocuments()) > 0) return
-  const task = await Task.findOne().sort({ createdAt: 1 })
-  if (!task) return
-  await Comment.create([
-    {
-      taskId: task.id,
-      authorId: adminId,
-      body: 'Cookie path and Secure flags are set for production cross-site use.',
-    },
-    {
-      taskId: task.id,
-      authorId: developerId,
-      body: 'Verified the refresh call does not go through the axios interceptor.',
-    },
-  ])
+  const tasks = await Task.find().select('title')
+  const payload = buildSeedPayload(adminId, developerId)
+  await writeComments(adminId, developerId, tasks.map((task) => ({ id: task.id, title: task.title })), payload.comments)
 }
 
 async function seed(): Promise<void> {
