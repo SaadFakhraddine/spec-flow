@@ -3,7 +3,7 @@ import type { Task, TaskStatus } from '@/types'
 import { priorityClass, taskStatusLabel, taskStatuses } from '@/utils/status'
 import Select from '@/components/ui/Select.vue'
 
-defineProps<{ task: Task }>()
+const props = defineProps<{ task: Task }>()
 const emit = defineEmits<{ open: []; status: [TaskStatus] }>()
 
 const statusOptions = taskStatuses.map((value) => ({ value, label: taskStatusLabel[value] }))
@@ -15,6 +15,12 @@ function initials(name: string): string {
     .map((part) => part[0]?.toUpperCase() ?? '')
     .join('')
 }
+
+function onDragStart(event: DragEvent): void {
+  if (!event.dataTransfer) return
+  event.dataTransfer.setData('text/task-id', props.task.id)
+  event.dataTransfer.effectAllowed = 'move'
+}
 </script>
 
 <template>
@@ -22,7 +28,7 @@ function initials(name: string): string {
     draggable="true"
     class="sf-panel cursor-grab px-3 py-2.5 active:cursor-grabbing"
     @click="emit('open')"
-    @dragstart="$event.dataTransfer?.setData('text/task-id', task.id)"
+    @dragstart="onDragStart"
   >
     <p class="text-body font-medium leading-snug">{{ task.title }}</p>
     <div class="mt-2 flex items-center gap-2">
