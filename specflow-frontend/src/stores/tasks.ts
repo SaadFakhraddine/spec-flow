@@ -77,6 +77,18 @@ export const useTasksStore = defineStore('tasks', () => {
     })
   }
 
+  async function patchTaskQuiet(id: string, data: Partial<TaskInput>): Promise<Task | null> {
+    error.value = ''
+    try {
+      const response = await apiClient.patch<ApiResponse<Task>>(`/tasks/${id}`, data)
+      remember(response.data.data)
+      return response.data.data
+    } catch (caught) {
+      error.value = errorMessage(caught)
+      return null
+    }
+  }
+
   async function deleteTask(id: string): Promise<boolean> {
     const result = await run(async () => {
       await apiClient.delete(`/tasks/${id}`)
@@ -124,6 +136,7 @@ export const useTasksStore = defineStore('tasks', () => {
     fetchBoardColumns,
     createTask,
     updateTask,
+    patchTaskQuiet,
     deleteTask,
     assignTask,
   }

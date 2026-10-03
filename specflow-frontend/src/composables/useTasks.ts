@@ -20,6 +20,7 @@ export function useTasks() {
     fetchBoardColumns: store.fetchBoardColumns,
     createTask: store.createTask,
     updateTask: store.updateTask,
+    patchTaskQuiet: store.patchTaskQuiet,
     deleteTask: store.deleteTask,
     assignTask: store.assignTask,
   }

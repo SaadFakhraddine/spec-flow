@@ -59,6 +59,7 @@ vi.mock('@/composables/useTasks', async () => {
       fetchBoardColumns: vi.fn(),
       createTask: vi.fn(),
       updateTask: vi.fn(),
+      patchTaskQuiet: vi.fn(),
     }),
   }
 })

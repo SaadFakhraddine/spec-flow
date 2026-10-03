@@ -5,9 +5,10 @@ import { useAuth } from '@/composables/useAuth'
 import { useUsers } from '@/composables/useDashboard'
 import { useTasks } from '@/composables/useTasks'
 import { useToast } from '@/composables/useToast'
-import type { Task, TaskInput, TaskStatus } from '@/types'
+import type { TaskInput, TaskStatus } from '@/types'
 import { PAGE_LIMIT } from '@/types'
 import { taskStatuses } from '@/utils/status'
+import { moveTaskOnBoard, type BoardColumns } from '@/utils/boardMove'
 import Button from '@/components/ui/Button.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import LoadingSkeleton from '@/components/ui/LoadingSkeleton.vue'
@@ -25,12 +26,12 @@ const toast = useToast()
 const { users, load: loadUsers } = useUsers()
 const {
   tasks, total, currentPage, isLoading, error, filters,
-  fetchTasks, fetchBoardColumns, createTask, updateTask,
+  fetchTasks, fetchBoardColumns, createTask, updateTask, patchTaskQuiet,
 } = useTasks()
 
 const creating = ref(false)
 const drawerRef = ref<{ stopSaving: () => void } | null>(null)
-const board = ref<Record<TaskStatus, Task[]> | null>(null)
+const board = ref<BoardColumns | null>(null)
 const view = computed(() => (route.query.view === 'board' ? 'board' : 'list'))
 const isAdmin = computed(() => user.value?.role === 'admin')
 const hasFilters = computed(() =>
@@ -79,13 +80,25 @@ function open(id: string): void {
 }
 
 async function onStatus(id: string, status: TaskStatus): Promise<void> {
+  if (view.value === 'board' && board.value) {
+    const { next, previous, moved } = moveTaskOnBoard(board.value, id, status)
+    if (!moved) return
+    board.value = next
+    const updated = await patchTaskQuiet(id, { status })
+    if (!updated) {
+      board.value = previous
+      toast.error(error.value || 'Could not update status')
+      return
+    }
+    toast.success('Status updated')
+    return
+  }
   const updated = await updateTask(id, { status })
   if (!updated) {
     toast.error(error.value || 'Could not update status')
     return
   }
   toast.success('Status updated')
-  if (view.value === 'board') await loadBoard()
 }
 
 async function onCreate(input: TaskInput): Promise<void> {
