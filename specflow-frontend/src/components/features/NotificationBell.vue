@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useNotifications } from '@/composables/useNotifications'
 import { formatRelative } from '@/utils/format'
@@ -7,23 +7,51 @@ import Button from '@/components/ui/Button.vue'
 
 const router = useRouter()
 const open = ref(false)
+const root = ref<HTMLElement | null>(null)
 const { items, unreadCount, markRead, markAllRead } = useNotifications(true)
+
+function close(): void {
+  open.value = false
+}
+
+function toggle(): void {
+  open.value = !open.value
+}
 
 async function openItem(id: string, taskId: string | null): Promise<void> {
   await markRead(id)
-  open.value = false
+  close()
   if (taskId) await router.push(`/tasks/${taskId}`)
 }
+
+function onDocumentClick(event: MouseEvent): void {
+  if (!open.value || !root.value) return
+  if (!root.value.contains(event.target as Node)) close()
+}
+
+function onKeydown(event: KeyboardEvent): void {
+  if (event.key === 'Escape' && open.value) close()
+}
+
+onMounted(() => {
+  document.addEventListener('click', onDocumentClick)
+  document.addEventListener('keydown', onKeydown)
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('click', onDocumentClick)
+  document.removeEventListener('keydown', onKeydown)
+})
 </script>
 
 <template>
-  <div class="relative px-2">
+  <div ref="root" class="relative px-2">
     <button
       type="button"
       class="relative rounded-md px-2 py-1 text-body text-muted motion-color hover:bg-elevated hover:text-text"
       aria-label="Notifications"
       :aria-expanded="open"
-      @click="open = !open"
+      @click.stop="toggle"
     >
       Alerts
       <span
@@ -37,10 +65,14 @@ async function openItem(id: string, taskId: string | null): Promise<void> {
       v-if="open"
       class="absolute bottom-10 left-0 z-50 w-72 rounded-md border border-line bg-surface p-3 shadow-panel md:bottom-auto md:top-10"
       role="menu"
+      @click.stop
     >
-      <div class="mb-2 flex items-center justify-between">
+      <div class="mb-2 flex items-center justify-between gap-2">
         <p class="text-body font-medium">Notifications</p>
-        <Button variant="ghost" @click="markAllRead">Mark all read</Button>
+        <div class="flex items-center gap-1">
+          <Button variant="ghost" @click="markAllRead">Mark all read</Button>
+          <Button variant="ghost" aria-label="Close notifications" @click="close">Close</Button>
+        </div>
       </div>
       <ul class="max-h-72 space-y-2 overflow-auto">
         <li v-if="items.length === 0" class="text-body text-muted">No notifications yet.</li>
