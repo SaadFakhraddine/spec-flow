@@ -44,7 +44,8 @@ const hasFilters = computed(() =>
       filters.value.priority ||
       filters.value.assignedTo ||
       filters.value.q ||
-      filters.value.due,
+      filters.value.due ||
+      filters.value.blocked,
   ),
 )
 const emptyBoard = computed(() =>
@@ -58,6 +59,7 @@ function listParams() {
     assignedTo: filters.value.assignedTo,
     q: filters.value.q,
     due: filters.value.due,
+    blocked: filters.value.blocked,
   }
 }
 

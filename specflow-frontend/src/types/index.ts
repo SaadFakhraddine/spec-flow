@@ -16,6 +16,17 @@ export interface UserRef {
   email: string
 }
 
+export interface ChecklistItem {
+  key: string
+  label: string
+  done: boolean
+}
+
+export interface TaskRef {
+  id: string
+  title: string
+}
+
 export interface Task {
   id: string
   title: string
@@ -28,6 +39,11 @@ export interface Task {
   tags: string[]
   dueDate: string | null
   watching: boolean
+  blocked: boolean
+  blockedReason: string
+  blockedBy: TaskRef[]
+  checklist: ChecklistItem[]
+  externalUrl: string
   createdAt: string
   updatedAt: string
 }
@@ -108,6 +124,7 @@ export interface TaskFilters {
   assignedTo?: string
   q?: string
   due?: string
+  blocked?: string
 }
 
 export interface SpecFilters {
@@ -124,6 +141,10 @@ export interface TaskInput {
   specId?: string | null
   tags?: string[]
   dueDate?: string | null
+  blockedReason?: string | null
+  blockedBy?: string[]
+  checklist?: ChecklistItem[]
+  externalUrl?: string | null
 }
 
 export interface SpecForm {
@@ -144,6 +165,8 @@ export interface DashboardStats {
   completedThisWeek: number
   overdueCount: number
   dueSoonCount: number
+  blockedCount: number
+  unspeccedOpenCount: number
   recentActivity: Task[]
 }
 

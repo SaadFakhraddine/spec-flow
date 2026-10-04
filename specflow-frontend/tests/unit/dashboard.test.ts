@@ -26,6 +26,8 @@ describe('useDashboard', () => {
           completedThisWeek: 1,
           overdueCount: 1,
           dueSoonCount: 2,
+          blockedCount: 1,
+          unspeccedOpenCount: 0,
           recentActivity: [],
         },
       },

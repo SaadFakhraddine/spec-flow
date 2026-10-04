@@ -7,6 +7,7 @@ export const listTaskValidator = [
   query('assignedTo').optional().isMongoId().withMessage('Invalid assignee'),
   query('q').optional().isString().isLength({ max: 100 }).withMessage('Search is too long'),
   query('due').optional().isIn(['overdue', 'soon']).withMessage('Invalid due filter'),
+  query('blocked').optional().isIn(['true', 'false', '1', '0']).withMessage('Invalid blocked filter'),
   query('page').optional().isInt({ min: 1 }).withMessage('Invalid page'),
   query('limit').optional().isInt({ min: 1, max: 50 }).withMessage('Invalid limit'),
 ]
@@ -33,6 +34,18 @@ export const updateTaskValidator = [
   body('tags').optional().isArray({ max: 5 }).withMessage('At most 5 tags'),
   body('tags.*').optional().isString().isLength({ min: 1, max: 20 }).withMessage('Each tag must be at most 20 characters'),
   body('dueDate').optional({ nullable: true }).isISO8601().withMessage('Due date must be a valid date'),
+  body('blockedReason').optional({ nullable: true }).isString().isLength({ max: 200 }),
+  body('blockedBy').optional().isArray({ max: 10 }).withMessage('At most 10 blockers'),
+  body('blockedBy.*').optional().isMongoId().withMessage('Invalid blocker task id'),
+  body('checklist').optional().isArray({ max: 10 }),
+  body('checklist.*.key').optional().isString().isLength({ max: 40 }),
+  body('checklist.*.label').optional().isString().isLength({ max: 80 }),
+  body('checklist.*.done').optional().isBoolean(),
+  body('externalUrl')
+    .optional({ nullable: true })
+    .isString()
+    .isLength({ max: 500 })
+    .withMessage('Link must be at most 500 characters'),
 ]
 
 export const assignTaskValidator = [

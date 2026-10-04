@@ -45,6 +45,15 @@ vi.mock('@/composables/useTasks', async () => {
     tags: [],
     dueDate: null,
     watching: false,
+    blocked: false,
+    blockedReason: '',
+    blockedBy: [],
+    checklist: [
+      { key: 'tests', label: 'Tests', done: false },
+      { key: 'pr', label: 'PR ready', done: false },
+      { key: 'reviewed', label: 'Reviewed', done: false },
+    ],
+    externalUrl: '',
     createdAt: '2026-09-01T00:00:00.000Z',
     updatedAt: '2026-09-02T00:00:00.000Z',
   }

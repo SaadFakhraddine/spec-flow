@@ -15,6 +15,7 @@ function cleanFilters(filters: TaskFilters): Record<string, string> {
   if (filters.assignedTo) params.assignedTo = filters.assignedTo
   if (filters.q) params.q = filters.q
   if (filters.due) params.due = filters.due
+  if (filters.blocked) params.blocked = filters.blocked
   return params
 }
 

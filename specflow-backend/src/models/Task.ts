@@ -26,6 +26,30 @@ const taskSchema = new Schema(
     tags: { type: [String], default: [], validate: tagsValidator },
     dueDate: { type: Date, default: null },
     watchers: { type: [{ type: Schema.Types.ObjectId, ref: 'User' }], default: [] },
+    blockedReason: { type: String, default: '', maxlength: 200, trim: true },
+    blockedBy: {
+      type: [{ type: Schema.Types.ObjectId, ref: 'Task' }],
+      default: [],
+      validate: {
+        validator: (ids: unknown[]) => ids.length <= 10,
+        message: 'At most 10 blocker tasks',
+      },
+    },
+    checklist: {
+      type: [
+        {
+          key: { type: String, required: true },
+          label: { type: String, required: true },
+          done: { type: Boolean, default: false },
+        },
+      ],
+      default: () => [
+        { key: 'tests', label: 'Tests', done: false },
+        { key: 'pr', label: 'PR ready', done: false },
+        { key: 'reviewed', label: 'Reviewed', done: false },
+      ],
+    },
+    externalUrl: { type: String, default: '', maxlength: 500, trim: true },
   },
   { timestamps: true },
 )

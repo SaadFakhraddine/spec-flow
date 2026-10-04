@@ -1,4 +1,13 @@
-import type { SpecDto, TaskDto, TaskPriority, TaskStatus, UserRef } from '../types/api.types'
+import type {
+  ChecklistItemDto,
+  SpecDto,
+  TaskDto,
+  TaskPriority,
+  TaskRef,
+  TaskStatus,
+  UserRef,
+} from '../types/api.types'
+import { DEFAULT_CHECKLIST, normalizeChecklist } from './checklist'
 import { AppError } from './AppError'
 
 interface MaybeUser {
@@ -64,6 +73,10 @@ interface TaskSource {
   tags?: string[]
   dueDate?: Date | string | null
   watchers?: unknown[]
+  blockedReason?: string
+  blockedBy?: unknown[]
+  checklist?: ChecklistItemDto[]
+  externalUrl?: string
   createdAt: Date | string
   updatedAt: Date | string
 }
@@ -73,8 +86,26 @@ function isWatching(watchers: unknown[] | undefined, viewerId?: string): boolean
   return watchers.some((entry) => mapId(entry) === viewerId)
 }
 
+function mapBlockedBy(entries: unknown[] | undefined): TaskRef[] {
+  if (!entries?.length) return []
+  return entries
+    .map((entry) => {
+      if (!entry || typeof entry !== 'object') {
+        const id = mapId(entry)
+        return id ? { id, title: 'Task' } : null
+      }
+      const doc = entry as { id?: string; _id?: unknown; title?: string }
+      const id = doc.id ?? (doc._id ? String(doc._id) : '')
+      if (!id) return null
+      return { id, title: doc.title ?? 'Task' }
+    })
+    .filter((item): item is TaskRef => Boolean(item))
+}
+
 export function mapTaskSource(value: unknown, viewerId?: string): TaskDto {
   const task = value as TaskSource
+  const blockedReason = (task.blockedReason ?? '').trim()
+  const blockedBy = mapBlockedBy(task.blockedBy)
   return {
     id: task.id,
     title: task.title,
@@ -87,6 +118,11 @@ export function mapTaskSource(value: unknown, viewerId?: string): TaskDto {
     tags: task.tags ?? [],
     dueDate: iso(task.dueDate),
     watching: isWatching(task.watchers, viewerId),
+    blocked: Boolean(blockedReason) || blockedBy.length > 0,
+    blockedReason,
+    blockedBy,
+    checklist: normalizeChecklist(task.checklist ?? DEFAULT_CHECKLIST),
+    externalUrl: (task.externalUrl ?? '').trim(),
     createdAt: iso(task.createdAt) ?? '',
     updatedAt: iso(task.updatedAt) ?? '',
   }

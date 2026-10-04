@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { computed } from 'vue'
 import type { TaskFilters as Filters, User } from '@/types'
 import { taskPriorities, taskStatusLabel, taskStatuses } from '@/utils/status'
 import FilterBar from '@/components/ui/FilterBar.vue'
 import Input from '@/components/ui/Input.vue'
 import Select from '@/components/ui/Select.vue'
+import UserPicker from '@/components/ui/UserPicker.vue'
 import Button from '@/components/ui/Button.vue'
 
 const props = defineProps<{
@@ -24,14 +24,14 @@ const priorityOptions = [
   { value: '', label: 'All priorities' },
   ...taskPriorities.map((value) => ({ value, label: value[0]?.toUpperCase() + value.slice(1) })),
 ]
-const assigneeOptions = computed(() => [
-  { value: '', label: 'Anyone' },
-  ...props.users.map((person) => ({ value: person.id, label: person.name })),
-])
 const dueOptions = [
   { value: '', label: 'Any due date' },
   { value: 'overdue', label: 'Overdue' },
   { value: 'soon', label: 'Due in 7 days' },
+]
+const blockedOptions = [
+  { value: '', label: 'Any blockers' },
+  { value: 'true', label: 'Blocked only' },
 ]
 
 function patch(partial: Partial<Filters>): void {
@@ -39,7 +39,7 @@ function patch(partial: Partial<Filters>): void {
 }
 
 function clear(): void {
-  emit('update:modelValue', { status: '', priority: '', assignedTo: '', q: '', due: '' })
+  emit('update:modelValue', { status: '', priority: '', assignedTo: '', q: '', due: '', blocked: '' })
 }
 
 function myTasks(): void {
@@ -76,12 +76,12 @@ function myTasks(): void {
         @update:model-value="patch({ priority: $event })"
       />
     </div>
-    <div v-if="isAdmin" class="w-44">
-      <Select
+    <div v-if="isAdmin" class="w-56">
+      <UserPicker
         id="filter-assignee"
         :model-value="modelValue.assignedTo ?? ''"
         label="Assignee"
-        :options="assigneeOptions"
+        placeholder="Search assignee…"
         @update:model-value="patch({ assignedTo: $event })"
       />
     </div>
@@ -92,6 +92,15 @@ function myTasks(): void {
         label="Due"
         :options="dueOptions"
         @update:model-value="patch({ due: $event })"
+      />
+    </div>
+    <div class="w-40">
+      <Select
+        id="filter-blocked"
+        :model-value="modelValue.blocked ?? ''"
+        label="Blocked"
+        :options="blockedOptions"
+        @update:model-value="patch({ blocked: $event })"
       />
     </div>
     <Button variant="secondary" @click="myTasks">My tasks</Button>

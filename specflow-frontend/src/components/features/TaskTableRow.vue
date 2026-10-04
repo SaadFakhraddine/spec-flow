@@ -37,7 +37,12 @@ function onRowClick(event: MouseEvent): void {
         @change="emit('toggle', ($event.target as HTMLInputElement).checked)"
       />
     </td>
-    <td class="px-3 py-2.5 text-body">{{ task.title }}</td>
+    <td class="px-3 py-2.5 text-body">
+      <span class="inline-flex flex-wrap items-center gap-2">
+        {{ task.title }}
+        <span v-if="task.blocked" class="sf-chip bg-danger/15 text-danger">Blocked</span>
+      </span>
+    </td>
     <td class="px-3 py-2.5" @click.stop>
       <Select
         :id="`status-${task.id}`"

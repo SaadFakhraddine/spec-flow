@@ -17,6 +17,8 @@ const blocks = computed(() => {
     { label: openLabel, value: stats.value?.openTasks ?? 0 },
     { label: 'Overdue', value: stats.value?.overdueCount ?? 0 },
     { label: 'Due in 7 days', value: stats.value?.dueSoonCount ?? 0 },
+    { label: 'Blocked', value: stats.value?.blockedCount ?? 0 },
+    { label: 'Open without spec', value: stats.value?.unspeccedOpenCount ?? 0 },
     { label: 'Specs in review', value: stats.value?.specsInReview ?? 0 },
     { label: 'Completed this week', value: stats.value?.completedThisWeek ?? 0 },
   ]

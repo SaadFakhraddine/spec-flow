@@ -2,6 +2,7 @@ import { User, type UserDocument } from '../models/User'
 import type { PublicUser, Role } from '../types/api.types'
 import { AppError } from '../utils/AppError'
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '../utils/jwt'
+import { escapeRegex } from '../utils/pagination'
 
 export interface AuthResult {
   accessToken: string
@@ -64,7 +65,15 @@ export async function getMe(userId: string): Promise<PublicUser> {
   return toPublic(user)
 }
 
-export async function listUsers(): Promise<PublicUser[]> {
-  const users = await User.find().sort({ name: 1 })
+export async function listUsers(q?: string, limit = 50): Promise<PublicUser[]> {
+  const filter: Record<string, unknown> = {}
+  if (q?.trim()) {
+    const pattern = escapeRegex(q.trim())
+    filter.$or = [
+      { name: { $regex: pattern, $options: 'i' } },
+      { email: { $regex: pattern, $options: 'i' } },
+    ]
+  }
+  const users = await User.find(filter).sort({ name: 1 }).limit(Math.min(limit, 100))
   return users.map((user) => toPublic(user))
 }

@@ -31,7 +31,8 @@ function onDragStart(event: DragEvent): void {
     @dragstart="onDragStart"
   >
     <p class="text-body font-medium leading-snug">{{ task.title }}</p>
-    <div class="mt-2 flex items-center gap-2">
+    <div class="mt-2 flex flex-wrap items-center gap-2">
+      <span v-if="task.blocked" class="sf-chip bg-danger/15 text-danger">Blocked</span>
       <span class="text-label capitalize" :class="priorityClass[task.priority]">{{ task.priority }}</span>
       <span
         v-if="task.assignedTo"

@@ -12,12 +12,14 @@ function filtersFrom(req: Request) {
   const status = readText(req.query.status)
   const priority = readText(req.query.priority)
   const due = readText(req.query.due)
+  const blocked = readText(req.query.blocked)
   return {
     status: status && isTaskStatus(status) ? status as TaskStatus : undefined,
     priority: priority && isTaskPriority(priority) ? priority as TaskPriority : undefined,
     assignedTo: readText(req.query.assignedTo),
     q: readText(req.query.q),
     due: due === 'overdue' || due === 'soon' ? (due as DueFilter) : undefined,
+    blocked: blocked === 'true' || blocked === '1' ? true : undefined,
   }
 }
 

@@ -13,6 +13,7 @@ import Select from '@/components/ui/Select.vue'
 import PageWrapper from '@/components/layout/PageWrapper.vue'
 import CommentsPanel from '@/components/features/CommentsPanel.vue'
 import LinkTaskModal from '@/components/features/LinkTaskModal.vue'
+import SpecCoverage from '@/components/features/SpecCoverage.vue'
 import SpecEditor from '@/components/features/SpecEditor.vue'
 import SpecSection from '@/components/features/SpecSection.vue'
 
@@ -129,18 +130,21 @@ async function link(taskId: string): Promise<void> {
           </ul>
         </section>
       </div>
-      <aside class="sf-panel h-fit space-y-4 p-4 lg:sticky lg:top-4" :class="specBorder[selectedSpec.status]">
-        <p class="text-label uppercase tracking-wide text-muted">Workflow</p>
-        <Select
-          v-if="isAdmin"
-          id="spec-status"
-          :model-value="selectedSpec.status"
-          label="Status"
-          :options="statusOptions"
-          @update:model-value="onStatus"
-        />
-        <p v-else class="sf-chip bg-elevated text-text">{{ specStatusLabel[selectedSpec.status] }}</p>
-        <p class="text-label text-muted">Created by {{ selectedSpec.createdBy.name }}</p>
+      <aside class="space-y-4 lg:sticky lg:top-4">
+        <div class="sf-panel h-fit space-y-4 p-4" :class="specBorder[selectedSpec.status]">
+          <p class="text-label uppercase tracking-wide text-muted">Workflow</p>
+          <Select
+            v-if="isAdmin"
+            id="spec-status"
+            :model-value="selectedSpec.status"
+            label="Status"
+            :options="statusOptions"
+            @update:model-value="onStatus"
+          />
+          <p v-else class="sf-chip bg-elevated text-text">{{ specStatusLabel[selectedSpec.status] }}</p>
+          <p class="text-label text-muted">Created by {{ selectedSpec.createdBy.name }}</p>
+        </div>
+        <SpecCoverage :spec="selectedSpec" />
       </aside>
       <div class="lg:col-span-2">
         <CommentsPanel resource="specs" :parent-id="selectedSpec.id" />

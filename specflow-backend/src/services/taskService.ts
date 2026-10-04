@@ -6,13 +6,28 @@ import { AppError } from '../utils/AppError'
 import { mapId, mapTaskSource } from '../utils/mappers'
 import { escapeRegex } from '../utils/pagination'
 import { recordActivity } from './activityService'
+import { DEFAULT_CHECKLIST } from '../utils/checklist'
 import { notifyAssignment, notifyStatusWatchers } from './notificationService'
 import { adminPatch, developerPatch } from './taskPatch'
 
 const USER_FIELDS = 'name email'
 
-function populateTask<T extends { populate: (path: string, select: string) => T }>(query: T): T {
-  return query.populate('assignedTo', USER_FIELDS).populate('createdBy', USER_FIELDS)
+function populateTask<T extends {
+  populate: (path: string, select: string) => T
+}>(query: T): T {
+  return query
+    .populate('assignedTo', USER_FIELDS)
+    .populate('createdBy', USER_FIELDS)
+    .populate('blockedBy', 'title')
+}
+
+function applyBlockedFilter(query: Record<string, unknown>, blocked?: boolean): void {
+  if (blocked !== true) return
+  query.$or = [
+    { blockedReason: { $exists: true, $nin: [null, ''] } },
+    { 'blockedBy.0': { $exists: true } },
+  ]
+  query.status = query.status ?? { $ne: 'done' }
 }
 
 function applyDueFilter(query: Record<string, unknown>, due?: 'overdue' | 'soon'): void {
@@ -35,6 +50,7 @@ export async function getTasks(filters: TaskFilters, pageQuery: Page, viewerId?:
   if (filters.assignedTo) query.assignedTo = filters.assignedTo
   if (filters.q) query.title = { $regex: escapeRegex(filters.q), $options: 'i' }
   applyDueFilter(query, filters.due)
+  applyBlockedFilter(query, filters.blocked)
   const skip = (pageQuery.page - 1) * pageQuery.limit
   const [items, total] = await Promise.all([
     populateTask(Task.find(query).sort({ updatedAt: -1 }).skip(skip).limit(pageQuery.limit)),
@@ -73,6 +89,10 @@ export async function createTask(input: TaskInput, actor: Actor): Promise<TaskDt
     specId: input.specId ?? null,
     tags: input.tags ?? [],
     dueDate: input.dueDate ? new Date(input.dueDate) : null,
+    checklist: DEFAULT_CHECKLIST.map((item) => ({ ...item })),
+    blockedReason: '',
+    blockedBy: [],
+    externalUrl: '',
   })
   await linkSpec(task._id, input.specId)
   await recordActivity({
@@ -87,6 +107,9 @@ export async function createTask(input: TaskInput, actor: Actor): Promise<TaskDt
 export async function updateTask(id: string, input: TaskInput, actor: Actor): Promise<TaskDto> {
   const task = await Task.findById(id)
   if (!task) throw new AppError('Task not found', 404)
+  if (input.blockedBy?.includes(id)) {
+    throw new AppError('A task cannot block itself', 400)
+  }
   const previousStatus = task.status
   task.set(actor.role === 'admin' ? adminPatch(input) : developerPatch(input))
   await task.save()

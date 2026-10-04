@@ -4,8 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
 import { useTasks } from '@/composables/useTasks'
 import { useToast } from '@/composables/useToast'
-import { useUsers } from '@/composables/useDashboard'
-import type { TaskInput, TaskStatus } from '@/types'
+import type { ChecklistItem, TaskInput, TaskStatus } from '@/types'
 import { formatDate } from '@/utils/format'
 import { taskBorder, taskPriorities, taskStatusLabel, taskStatuses } from '@/utils/status'
 import Badge from '@/components/ui/Badge.vue'
@@ -13,10 +12,13 @@ import Button from '@/components/ui/Button.vue'
 import ConfirmDialog from '@/components/ui/ConfirmDialog.vue'
 import LoadingSkeleton from '@/components/ui/LoadingSkeleton.vue'
 import Select from '@/components/ui/Select.vue'
+import UserPicker from '@/components/ui/UserPicker.vue'
 import PageWrapper from '@/components/layout/PageWrapper.vue'
 import Input from '@/components/ui/Input.vue'
 import Textarea from '@/components/ui/Textarea.vue'
 import TaskComments from '@/components/features/TaskComments.vue'
+import TaskBlockers from '@/components/features/TaskBlockers.vue'
+import TaskChecklist from '@/components/features/TaskChecklist.vue'
 import ActivityTimeline from '@/components/features/ActivityTimeline.vue'
 import MarkdownBody from '@/components/ui/MarkdownBody.vue'
 
@@ -25,45 +27,46 @@ const router = useRouter()
 const { user } = useAuth()
 const toast = useToast()
 const {
-  selectedTask,
-  isLoading,
-  error,
-  fetchTaskById,
-  updateTask,
-  deleteTask,
-  assignTask,
-  watchTask,
-  unwatchTask,
+  selectedTask, isLoading, error, fetchTaskById, updateTask, deleteTask, assignTask, watchTask, unwatchTask,
 } = useTasks()
-const { users, load: loadUsers } = useUsers()
 const editing = ref(false)
 const confirming = ref(false)
-const draft = ref({ title: '', description: '', priority: 'medium', dueDate: '', tags: '' })
-
+const linkDraft = ref('')
+const draft = ref({ title: '', description: '', priority: 'medium', dueDate: '', tags: '', externalUrl: '' })
 const statusOptions = taskStatuses.map((value) => ({ value, label: taskStatusLabel[value] }))
 const priorityOptions = taskPriorities.map((value) => ({
   value,
   label: value.charAt(0).toUpperCase() + value.slice(1),
 }))
-const assigneeOptions = computed(() => [
-  { value: '', label: 'Choose a person' },
-  ...users.value.map((person) => ({ value: person.id, label: person.name })),
-])
 const isAdmin = computed(() => user.value?.role === 'admin')
+const checklistReady = computed(() => selectedTask.value?.checklist.every((item) => item.done) ?? true)
 
 function taskId(): string {
   return String(route.params.id)
 }
 
-onMounted(() => {
-  void fetchTaskById(taskId())
-  if (isAdmin.value) void loadUsers()
+onMounted(async () => {
+  await fetchTaskById(taskId())
+  linkDraft.value = selectedTask.value?.externalUrl ?? ''
 })
+
+async function saveLink(): Promise<void> {
+  const updated = await updateTask(taskId(), { externalUrl: linkDraft.value.trim() || null })
+  if (updated) toast.success('Link saved')
+  else toast.error(error.value || 'Could not save link')
+}
 
 async function onStatus(status: string): Promise<void> {
   const updated = await updateTask(taskId(), { status: status as TaskStatus })
-  if (updated) toast.success('Status updated')
-  else toast.error(error.value || 'Could not update status')
+  if (!updated) {
+    toast.error(error.value || 'Could not update status')
+    return
+  }
+  if (status === 'done' && !checklistReady.value) {
+    toast.error('Marked done with an incomplete checklist')
+  } else {
+    toast.success('Status updated')
+  }
 }
 
 function startEdit(): void {
@@ -74,6 +77,7 @@ function startEdit(): void {
     priority: selectedTask.value.priority,
     dueDate: selectedTask.value.dueDate ? selectedTask.value.dueDate.slice(0, 10) : '',
     tags: selectedTask.value.tags.join(', '),
+    externalUrl: selectedTask.value.externalUrl,
   }
   editing.value = true
 }
@@ -85,6 +89,7 @@ async function saveEdit(): Promise<void> {
     priority: draft.value.priority as TaskInput['priority'],
     tags: draft.value.tags.split(',').map((tag) => tag.trim()).filter(Boolean),
     dueDate: draft.value.dueDate ? new Date(draft.value.dueDate).toISOString() : null,
+    externalUrl: draft.value.externalUrl.trim() || null,
   }
   const updated = await updateTask(taskId(), input)
   if (!updated) {
@@ -109,6 +114,17 @@ async function onWatchToggle(): Promise<void> {
   else toast.error(error.value || 'Could not update watch')
 }
 
+async function onBlockers(payload: { blockedReason: string; blockedBy: string[] }): Promise<void> {
+  const updated = await updateTask(taskId(), payload)
+  if (updated) toast.success('Blockers updated')
+  else toast.error(error.value || 'Could not update blockers')
+}
+
+async function onChecklist(items: ChecklistItem[]): Promise<void> {
+  const updated = await updateTask(taskId(), { checklist: items })
+  if (!updated) toast.error(error.value || 'Could not update checklist')
+}
+
 async function onDelete(): Promise<void> {
   const ok = await deleteTask(taskId())
   confirming.value = false
@@ -131,6 +147,10 @@ async function onDelete(): Promise<void> {
     <template v-else-if="selectedTask">
       <div class="grid gap-6 lg:grid-cols-[1fr_22rem]">
         <div>
+          <div class="mb-4 flex flex-wrap items-center gap-2">
+            <span v-if="selectedTask.blocked" class="sf-chip bg-danger/15 text-danger">Blocked</span>
+            <span v-if="!checklistReady" class="sf-chip bg-elevated text-muted">Checklist incomplete</span>
+          </div>
           <div class="mb-6 flex flex-wrap items-end gap-3">
             <div class="w-48">
               <Select
@@ -141,12 +161,11 @@ async function onDelete(): Promise<void> {
                 @update:model-value="onStatus"
               />
             </div>
-            <div v-if="isAdmin" class="w-52">
-              <Select
+            <div v-if="isAdmin" class="w-64">
+              <UserPicker
                 id="task-assign"
                 :model-value="selectedTask.assignedTo?.id ?? ''"
                 label="Assign to"
-                :options="assigneeOptions"
                 @update:model-value="onAssign"
               />
             </div>
@@ -162,12 +181,13 @@ async function onDelete(): Promise<void> {
             <Select id="edit-priority" v-model="draft.priority" label="Priority" :options="priorityOptions" />
             <Input id="edit-due" v-model="draft.dueDate" label="Due date" type="date" />
             <Input id="edit-tags" v-model="draft.tags" label="Tags" />
+            <Input id="edit-link" v-model="draft.externalUrl" label="External link (PR / design)" />
             <div class="flex gap-2">
               <Button type="submit">Save</Button>
               <Button variant="ghost" type="button" @click="editing = false">Cancel</Button>
             </div>
           </form>
-          <dl v-else class="sf-panel space-y-4 p-4 text-body" :class="taskBorder[selectedTask.status]">
+          <dl v-else class="sf-panel mb-4 space-y-4 p-4 text-body" :class="taskBorder[selectedTask.status]">
             <div>
               <dt class="text-label text-muted">Description</dt>
               <dd class="mt-1">
@@ -182,6 +202,14 @@ async function onDelete(): Promise<void> {
             <div>
               <dt class="text-label text-muted">Due date</dt>
               <dd class="mt-1 font-mono text-label">{{ formatDate(selectedTask.dueDate) }}</dd>
+            </div>
+            <div v-if="selectedTask.externalUrl">
+              <dt class="text-label text-muted">External link</dt>
+              <dd class="mt-1">
+                <a class="text-primary" :href="selectedTask.externalUrl" target="_blank" rel="noopener noreferrer">
+                  Open link
+                </a>
+              </dd>
             </div>
             <div>
               <dt class="text-label text-muted">Created by</dt>
@@ -200,6 +228,31 @@ async function onDelete(): Promise<void> {
               </dd>
             </div>
           </dl>
+          <div class="space-y-4">
+            <TaskBlockers
+              :task-id="selectedTask.id"
+              :reason="selectedTask.blockedReason"
+              :blockers="selectedTask.blockedBy"
+              @save="onBlockers"
+            />
+            <TaskChecklist :items="selectedTask.checklist" @change="onChecklist" />
+            <section v-if="!editing" class="sf-panel space-y-2 p-4">
+              <h2 class="text-section font-medium">External link</h2>
+              <Input id="task-external-url" v-model="linkDraft" label="PR / design URL" placeholder="https://…" />
+              <div class="flex items-center gap-3">
+                <Button variant="secondary" @click="saveLink">Save link</Button>
+                <a
+                  v-if="selectedTask.externalUrl"
+                  class="text-body text-primary"
+                  :href="selectedTask.externalUrl"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Open link
+                </a>
+              </div>
+            </section>
+          </div>
         </div>
         <div class="space-y-4">
           <TaskComments :task-id="selectedTask.id" />

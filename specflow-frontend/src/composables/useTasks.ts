@@ -11,6 +11,7 @@ export function useTasks() {
     assignedTo: '',
     q: '',
     due: '',
+    blocked: '',
   })
 
   return {
