@@ -1,13 +1,11 @@
 <script setup lang="ts">
-import { computed } from 'vue'
 import { usePreferences } from '@/composables/usePreferences'
 import { useToast } from '@/composables/useToast'
 import type { NotificationPreferences } from '@/types'
+import ToggleSwitch from '@/components/ui/ToggleSwitch.vue'
 
-const { current, save } = usePreferences()
+const { prefs, save } = usePreferences()
 const toast = useToast()
-
-const prefs = computed(() => current().notifications)
 
 const options: { key: keyof NotificationPreferences; label: string; hint: string }[] = [
   { key: 'taskAssigned', label: 'Task assigned', hint: 'When someone assigns a task to you' },
@@ -16,9 +14,8 @@ const options: { key: keyof NotificationPreferences; label: string; hint: string
   { key: 'taskStatus', label: 'Status changes', hint: 'When watched tasks change status' },
 ]
 
-async function toggle(key: keyof NotificationPreferences): Promise<void> {
-  const next = !prefs.value[key]
-  const ok = await save({ notifications: { [key]: next } })
+async function onToggle(key: keyof NotificationPreferences, value: boolean): Promise<void> {
+  const ok = await save({ notifications: { [key]: value } })
   if (!ok) toast.error('Could not sync notification preferences')
 }
 </script>
@@ -34,16 +31,11 @@ async function toggle(key: keyof NotificationPreferences): Promise<void> {
         <p class="text-body font-medium">{{ option.label }}</p>
         <p class="mt-0.5 text-label text-muted">{{ option.hint }}</p>
       </div>
-      <button
-        type="button"
-        role="switch"
-        :aria-checked="prefs[option.key]"
-        class="sf-chip shrink-0 motion-color"
-        :class="prefs[option.key] ? 'bg-primary/15 text-primary' : 'bg-elevated text-muted'"
-        @click="toggle(option.key)"
-      >
-        {{ prefs[option.key] ? 'On' : 'Off' }}
-      </button>
+      <ToggleSwitch
+        :model-value="prefs.notifications[option.key]"
+        :label="option.label"
+        @update:model-value="onToggle(option.key, $event)"
+      />
     </li>
   </ul>
 </template>

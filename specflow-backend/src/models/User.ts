@@ -21,24 +21,34 @@ export interface IUserMethods {
 export type UserDocument = HydratedDocument<IUser, IUserMethods>
 type UserModel = Model<IUser, object, IUserMethods>
 
+const notificationPrefsSchema = new Schema(
+  {
+    taskAssigned: { type: Boolean, default: true },
+    commentCreated: { type: Boolean, default: true },
+    mentionCreated: { type: Boolean, default: true },
+    taskStatus: { type: Boolean, default: true },
+  },
+  { _id: false },
+)
+
+const defaultPrefsSchema = new Schema(
+  {
+    tasksView: { type: String, enum: ['list', 'board'], default: 'list' },
+  },
+  { _id: false },
+)
+
 const preferencesSchema = new Schema(
   {
     theme: { type: String, enum: ['light', 'dark', 'system'], default: 'system' },
     accent: { type: String, enum: ['teal', 'amber', 'slate'], default: 'teal' },
     density: { type: String, enum: ['comfortable', 'compact'], default: 'comfortable' },
     notifications: {
-      type: {
-        taskAssigned: { type: Boolean, default: true },
-        commentCreated: { type: Boolean, default: true },
-        mentionCreated: { type: Boolean, default: true },
-        taskStatus: { type: Boolean, default: true },
-      },
+      type: notificationPrefsSchema,
       default: () => ({ ...DEFAULT_PREFERENCES.notifications }),
     },
     defaults: {
-      type: {
-        tasksView: { type: String, enum: ['list', 'board'], default: 'list' },
-      },
+      type: defaultPrefsSchema,
       default: () => ({ ...DEFAULT_PREFERENCES.defaults }),
     },
   },

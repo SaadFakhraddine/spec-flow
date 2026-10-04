@@ -87,7 +87,8 @@ export async function updateProfile(userId: string, name: string): Promise<Publi
 export async function updatePreferences(userId: string, patch: PreferencesPatch): Promise<PublicUser> {
   const user = await User.findById(userId)
   if (!user) throw new AppError('User not found', 404)
-  user.set('preferences', mergePreferences(prefsOf(user), patch))
+  user.preferences = mergePreferences(prefsOf(user), patch) as UserDocument['preferences']
+  user.markModified('preferences')
   await user.save()
   return toPublic(user)
 }

@@ -1,13 +1,10 @@
 <script setup lang="ts">
-import { computed } from 'vue'
 import { usePreferences } from '@/composables/usePreferences'
 import { useToast } from '@/composables/useToast'
 import type { TasksViewPref } from '@/types'
 
-const { current, save } = usePreferences()
+const { prefs, save } = usePreferences()
 const toast = useToast()
-
-const tasksView = computed(() => current().defaults.tasksView)
 
 const options: { value: TasksViewPref; label: string }[] = [
   { value: 'list', label: 'List' },
@@ -15,7 +12,7 @@ const options: { value: TasksViewPref; label: string }[] = [
 ]
 
 async function setView(value: TasksViewPref): Promise<void> {
-  if (value === tasksView.value) return
+  if (value === prefs.value.defaults.tasksView) return
   const ok = await save({ defaults: { tasksView: value } })
   if (!ok) toast.error('Could not sync defaults')
 }
@@ -23,7 +20,9 @@ async function setView(value: TasksViewPref): Promise<void> {
 
 <template>
   <section>
-    <p class="text-body text-muted">Prefer list or board when opening Tasks (unless the URL sets a view).</p>
+    <p class="text-body text-muted">
+      Prefer list or board when opening Tasks (unless the URL sets a view).
+    </p>
     <div class="mt-3 flex flex-wrap gap-2" role="group" aria-label="Default tasks view">
       <button
         v-for="option in options"
@@ -31,7 +30,7 @@ async function setView(value: TasksViewPref): Promise<void> {
         type="button"
         class="rounded-md border px-3 py-1.5 text-body motion-color"
         :class="
-          tasksView === option.value
+          prefs.defaults.tasksView === option.value
             ? 'border-primary bg-elevated text-text'
             : 'border-line text-muted hover:bg-elevated'
         "
