@@ -4,6 +4,23 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>SpecFlow</title>
+    <script>
+      (function () {
+        try {
+          var raw = localStorage.getItem('sf-appearance')
+          var p = raw ? JSON.parse(raw) : {}
+          var theme = p.theme || 'system'
+          var accent = p.accent || 'teal'
+          var density = p.density || 'comfortable'
+          var dark =
+            theme === 'dark' ||
+            (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+          document.documentElement.dataset.theme = dark ? 'dark' : 'light'
+          document.documentElement.dataset.accent = accent
+          document.documentElement.dataset.density = density
+        } catch (e) {}
+      })()
+    </script>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />

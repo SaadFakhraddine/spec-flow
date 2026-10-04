@@ -22,6 +22,10 @@ export const useAuthStore = defineStore('auth', () => {
     setAccessToken('')
   }
 
+  function setUser(next: User): void {
+    user.value = next
+  }
+
   function applySession(session: Session): void {
     accessToken.value = session.accessToken
     user.value = session.user
@@ -91,5 +95,6 @@ export const useAuthStore = defineStore('auth', () => {
     loadUser,
     bootstrap,
     clearSession,
+    setUser,
   }
 })

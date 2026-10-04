@@ -2,12 +2,22 @@ export type Role = 'admin' | 'developer'
 export type TaskStatus = 'backlog' | 'in-progress' | 'in-review' | 'done'
 export type TaskPriority = 'low' | 'medium' | 'high' | 'critical'
 export type SpecStatus = 'draft' | 'ready' | 'in-review' | 'approved'
+export type ThemePref = 'light' | 'dark' | 'system'
+export type AccentPref = 'teal' | 'amber' | 'slate'
+export type DensityPref = 'comfortable' | 'compact'
+
+export interface AppearancePreferences {
+  theme: ThemePref
+  accent: AccentPref
+  density: DensityPref
+}
 
 export interface User {
   id: string
   name: string
   email: string
   role: Role
+  preferences: AppearancePreferences
 }
 
 export interface UserRef {

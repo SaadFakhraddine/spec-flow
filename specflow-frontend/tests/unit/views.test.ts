@@ -80,7 +80,13 @@ async function mountTasks() {
   const router = createRouter({ history: createMemoryHistory(), routes })
   await router.push('/tasks')
   const auth = useAuthStore()
-  auth.user = { id: '1', name: 'Ada', email: 'ada@specflow.dev', role: 'admin' }
+  auth.user = {
+    id: '1',
+    name: 'Ada',
+    email: 'ada@specflow.dev',
+    role: 'admin',
+    preferences: { theme: 'system', accent: 'teal', density: 'comfortable' },
+  }
   return mount(TasksView, { global: { plugins: [pinia, router] } })
 }
 

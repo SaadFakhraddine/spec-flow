@@ -9,7 +9,13 @@ vi.mock('@/composables/useApi', () => ({
   registerAuthHandlers: vi.fn(),
 }))
 
-const user = { id: '1', name: 'Ada', email: 'ada@specflow.dev', role: 'admin' as const }
+const user = {
+  id: '1',
+  name: 'Ada',
+  email: 'ada@specflow.dev',
+  role: 'admin' as const,
+  preferences: { theme: 'system' as const, accent: 'teal' as const, density: 'comfortable' as const },
+}
 
 describe('auth store', () => {
   beforeEach(() => {
