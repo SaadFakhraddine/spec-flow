@@ -1,9 +1,15 @@
 import { Router } from 'express'
 import * as authController from '../controllers/authController'
+import * as profileController from '../controllers/profileController'
 import { authRateLimiter } from '../middleware/rateLimiter'
 import { requireAuth } from '../middleware/auth'
 import { validate } from '../middleware/validate'
-import { loginValidator, preferencesValidator, registerValidator } from '../validators/authValidators'
+import {
+  loginValidator,
+  preferencesValidator,
+  profileValidator,
+  registerValidator,
+} from '../validators/authValidators'
 
 export const authRouter = Router()
 
@@ -12,6 +18,8 @@ authRouter.post('/login', authRateLimiter, validate(loginValidator), authControl
 authRouter.post('/refresh', authController.refresh)
 authRouter.post('/logout', authController.logout)
 authRouter.get('/me', requireAuth, authController.me)
+authRouter.get('/me/profile', requireAuth, profileController.getProfile)
+authRouter.patch('/me', requireAuth, validate(profileValidator), authController.updateProfile)
 authRouter.patch(
   '/me/preferences',
   requireAuth,

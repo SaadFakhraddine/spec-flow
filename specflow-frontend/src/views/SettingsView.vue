@@ -2,6 +2,9 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import AppearanceForm from '@/components/features/AppearanceForm.vue'
+import DefaultsForm from '@/components/features/DefaultsForm.vue'
+import NotificationsForm from '@/components/features/NotificationsForm.vue'
+import ProfilePanel from '@/components/features/ProfilePanel.vue'
 import SettingsNav from '@/components/layout/SettingsNav.vue'
 import PageWrapper from '@/components/layout/PageWrapper.vue'
 
@@ -26,9 +29,9 @@ const meta = computed(() => titles[section.value] ?? titles.appearance)
         <h2 class="text-section font-medium">{{ meta.title }}</h2>
         <p class="mt-1 mb-5 text-body text-muted">{{ meta.subtitle }}</p>
         <AppearanceForm v-if="section === 'appearance'" />
-        <div v-else-if="section === 'profile'" data-settings-profile />
-        <div v-else-if="section === 'notifications'" data-settings-notifications />
-        <div v-else-if="section === 'defaults'" data-settings-defaults />
+        <ProfilePanel v-else-if="section === 'profile'" />
+        <NotificationsForm v-else-if="section === 'notifications'" />
+        <DefaultsForm v-else-if="section === 'defaults'" />
         <p v-else class="text-body text-muted">Unknown settings section.</p>
       </div>
     </div>

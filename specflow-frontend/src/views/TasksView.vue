@@ -36,7 +36,14 @@ const creating = ref(false)
 const drawerRef = ref<{ stopSaving: () => void } | null>(null)
 const board = ref<BoardColumns | null>(null)
 const selected = ref<string[]>([])
-const view = computed(() => (route.query.view === 'board' ? 'board' : 'list'))
+const preferredView = computed(() =>
+  user.value?.preferences?.defaults?.tasksView === 'board' ? 'board' : 'list',
+)
+const view = computed(() => {
+  if (route.query.view === 'board') return 'board'
+  if (route.query.view === 'list') return 'list'
+  return preferredView.value
+})
 const isAdmin = computed(() => user.value?.role === 'admin')
 const hasFilters = computed(() =>
   Boolean(
@@ -78,10 +85,13 @@ function load(): void {
 }
 
 function setView(next: 'list' | 'board'): void {
-  void router.replace({ query: next === 'board' ? { view: 'board' } : {} })
+  void router.replace({ query: { ...route.query, view: next } })
 }
 
 onMounted(() => {
+  if (!route.query.view && preferredView.value === 'board') {
+    void router.replace({ query: { ...route.query, view: 'board' } })
+  }
   if (isAdmin.value) void loadUsers()
   load()
 })
