@@ -14,6 +14,7 @@ const links = [
   { to: '/dashboard', label: 'Dashboard' },
   { to: '/tasks', label: 'Tasks' },
   { to: '/specs', label: 'Specs' },
+  { to: '/settings', label: 'Settings' },
 ]
 
 function active(path: string): boolean {

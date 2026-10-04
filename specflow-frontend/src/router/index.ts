@@ -5,6 +5,7 @@ import CreateSpecView from '@/views/CreateSpecView.vue'
 import DashboardView from '@/views/DashboardView.vue'
 import LoginView from '@/views/LoginView.vue'
 import NotFoundView from '@/views/NotFoundView.vue'
+import SettingsView from '@/views/SettingsView.vue'
 import SpecDetailView from '@/views/SpecDetailView.vue'
 import SpecsView from '@/views/SpecsView.vue'
 import TaskDetailView from '@/views/TaskDetailView.vue'
@@ -19,6 +20,7 @@ export const routes = [
   { path: '/specs', name: 'specs', component: SpecsView },
   { path: '/specs/new', name: 'spec-new', component: CreateSpecView, meta: { admin: true } },
   { path: '/specs/:id', name: 'spec-detail', component: SpecDetailView },
+  { path: '/settings', name: 'settings', component: SettingsView },
   { path: '/:pathMatch(.*)*', name: 'not-found', component: NotFoundView, meta: { public: true, blank: true } },
 ]
 
