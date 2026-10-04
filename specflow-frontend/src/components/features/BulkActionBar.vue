@@ -45,7 +45,7 @@ function applyAssign(userId: string): void {
       <Select
         id="bulk-status"
         :model-value="status"
-        label=""
+        label="Status"
         compact
         :options="statusOptions"
         @update:model-value="applyStatus"
@@ -54,6 +54,9 @@ function applyAssign(userId: string): void {
     <div v-if="isAdmin" class="w-56">
       <UserPicker id="bulk-assign" model-value="" label="Assign to" @update:model-value="applyAssign" />
     </div>
-    <Button variant="ghost" @click="emit('clear')">Clear</Button>
+    <div class="flex flex-col">
+      <span class="mb-1 block text-label text-transparent select-none" aria-hidden="true">Clear</span>
+      <Button variant="ghost" @click="emit('clear')">Clear</Button>
+    </div>
   </div>
 </template>

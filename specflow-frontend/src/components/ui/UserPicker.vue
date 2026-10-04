@@ -17,11 +17,23 @@ const open = ref(false)
 const loading = ref(false)
 const error = ref('')
 const users = ref<User[]>([])
+const selected = ref<User | null>(null)
 const root = ref<HTMLElement | null>(null)
 
-const selectedLabel = computed(() => {
-  const match = users.value.find((user) => user.id === props.modelValue)
-  return match ? `${match.name} · ${match.email}` : props.modelValue ? 'Selected user' : ''
+const inputValue = computed({
+  get: () => {
+    if (open.value) return query.value
+    return selected.value?.name ?? ''
+  },
+  set: (value: string) => {
+    query.value = value
+  },
+})
+
+const hint = computed(() => {
+  if (open.value) return props.placeholder ?? 'Search people…'
+  if (selected.value) return selected.value.email
+  return props.placeholder ?? 'Search people…'
 })
 
 async function search(term = query.value): Promise<void> {
@@ -32,6 +44,9 @@ async function search(term = query.value): Promise<void> {
       params: { q: term || undefined, limit: 20 },
     })
     users.value = response.data.data
+    if (props.modelValue && !selected.value) {
+      selected.value = users.value.find((user) => user.id === props.modelValue) ?? null
+    }
   } catch (caught) {
     error.value = errorMessage(caught)
     users.value = []
@@ -41,14 +56,22 @@ async function search(term = query.value): Promise<void> {
 }
 
 function pick(user: User): void {
+  selected.value = user
   emit('update:modelValue', user.id)
   query.value = ''
   open.value = false
 }
 
 function clear(): void {
+  selected.value = null
   emit('update:modelValue', '')
   query.value = ''
+}
+
+function onFocus(): void {
+  open.value = true
+  query.value = ''
+  void search('')
 }
 
 function onDocClick(event: MouseEvent): void {
@@ -57,15 +80,38 @@ function onDocClick(event: MouseEvent): void {
 
 let timer: ReturnType<typeof setTimeout> | undefined
 watch(query, (value) => {
+  if (!open.value) return
   if (timer) clearTimeout(timer)
   timer = setTimeout(() => {
-    if (open.value) void search(value)
+    void search(value)
   }, 200)
 })
 
+watch(
+  () => props.modelValue,
+  async (id) => {
+    if (!id) {
+      selected.value = null
+      return
+    }
+    if (selected.value?.id === id) return
+    const match = users.value.find((user) => user.id === id)
+    if (match) {
+      selected.value = match
+      return
+    }
+    await search('')
+    selected.value = users.value.find((user) => user.id === id) ?? selected.value
+  },
+)
+
 onMounted(() => {
   document.addEventListener('click', onDocClick)
-  void search('')
+  void search('').then(() => {
+    if (props.modelValue) {
+      selected.value = users.value.find((user) => user.id === props.modelValue) ?? null
+    }
+  })
 })
 
 onBeforeUnmount(() => {
@@ -78,23 +124,30 @@ onBeforeUnmount(() => {
   <div ref="root" class="relative">
     <label class="block" :for="id">
       <span class="mb-1 block text-label text-muted">{{ label }}</span>
-      <input
-        :id="id"
-        v-model="query"
-        type="search"
-        class="w-full rounded-md border border-line bg-elevated px-3 py-2 text-body text-text"
-        :placeholder="placeholder ?? 'Search people…'"
-        autocomplete="off"
-        @focus="open = true; search(query)"
-      />
+      <div class="flex gap-1">
+        <input
+          :id="id"
+          v-model="inputValue"
+          type="search"
+          class="w-full rounded-md border border-line bg-elevated px-3 py-2 text-body text-text"
+          :placeholder="hint"
+          autocomplete="off"
+          @focus="onFocus"
+        />
+        <button
+          v-if="modelValue"
+          type="button"
+          class="shrink-0 rounded-md border border-line px-2 text-label text-muted hover:bg-elevated"
+          aria-label="Clear assignee"
+          @click="clear"
+        >
+          ×
+        </button>
+      </div>
     </label>
-    <p v-if="modelValue && !open" class="mt-1 text-label text-muted">
-      {{ selectedLabel }}
-      <button type="button" class="ml-2 text-primary" @click="clear">Clear</button>
-    </p>
     <ul
       v-if="open"
-      class="absolute z-40 mt-1 max-h-56 w-full overflow-auto rounded-md border border-line bg-surface py-1 shadow-panel"
+      class="absolute left-0 right-0 z-40 mt-1 max-h-56 overflow-auto rounded-md border border-line bg-surface py-1 shadow-panel"
     >
       <li v-if="loading" class="px-3 py-2 text-label text-muted">Searching…</li>
       <li v-else-if="error" class="px-3 py-2 text-label text-danger">{{ error }}</li>

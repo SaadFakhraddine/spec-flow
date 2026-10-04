@@ -152,7 +152,7 @@ async function onDelete(): Promise<void> {
             <span v-if="!checklistReady" class="sf-chip bg-elevated text-muted">Checklist incomplete</span>
           </div>
           <div class="mb-6 flex flex-wrap items-end gap-3">
-            <div class="w-48">
+            <div class="w-44">
               <Select
                 id="task-status"
                 :model-value="selectedTask.status"
@@ -161,7 +161,7 @@ async function onDelete(): Promise<void> {
                 @update:model-value="onStatus"
               />
             </div>
-            <div v-if="isAdmin" class="w-64">
+            <div v-if="isAdmin" class="min-w-[14rem] flex-1 basis-56">
               <UserPicker
                 id="task-assign"
                 :model-value="selectedTask.assignedTo?.id ?? ''"
@@ -169,11 +169,16 @@ async function onDelete(): Promise<void> {
                 @update:model-value="onAssign"
               />
             </div>
-            <Button variant="secondary" @click="onWatchToggle">
-              {{ selectedTask.watching ? 'Unwatch' : 'Watch' }}
-            </Button>
-            <Button v-if="isAdmin" variant="secondary" @click="startEdit">Edit</Button>
-            <Button v-if="isAdmin" variant="danger" @click="confirming = true">Delete</Button>
+            <div class="flex flex-col">
+              <span class="mb-1 block text-label text-transparent select-none" aria-hidden="true">Actions</span>
+              <div class="flex flex-wrap gap-2">
+                <Button variant="secondary" @click="onWatchToggle">
+                  {{ selectedTask.watching ? 'Unwatch' : 'Watch' }}
+                </Button>
+                <Button v-if="isAdmin" variant="secondary" @click="startEdit">Edit</Button>
+                <Button v-if="isAdmin" variant="danger" @click="confirming = true">Delete</Button>
+              </div>
+            </div>
           </div>
           <form v-if="editing" class="sf-panel mb-6 flex flex-col gap-4 p-4" @submit.prevent="saveEdit">
             <Input id="edit-title" v-model="draft.title" label="Title" />
@@ -254,7 +259,7 @@ async function onDelete(): Promise<void> {
             </section>
           </div>
         </div>
-        <div class="space-y-4">
+        <div class="space-y-4 lg:sticky lg:top-4 lg:self-start">
           <TaskComments :task-id="selectedTask.id" />
           <ActivityTimeline :task-id="selectedTask.id" />
         </div>

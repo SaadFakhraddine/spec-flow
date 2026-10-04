@@ -29,13 +29,16 @@ watch(
 </script>
 
 <template>
-  <section class="sf-panel p-4">
-    <h2 class="text-section font-medium">Activity</h2>
+  <section class="sf-panel flex min-h-0 flex-col p-4">
+    <h2 class="shrink-0 text-section font-medium">Activity</h2>
     <p v-if="isLoading" class="mt-3 text-body text-muted">Loading activity…</p>
     <p v-else-if="items.length === 0" class="mt-3 text-body text-muted">
       {{ emptyMessage ?? 'No activity yet.' }}
     </p>
-    <ul v-else class="mt-3 space-y-3">
+    <ul
+      v-else
+      class="mt-3 max-h-80 space-y-3 overflow-y-auto overscroll-contain pr-1 md:max-h-[28rem]"
+    >
       <li v-for="item in items" :key="item.id" class="border-b border-line pb-2 last:border-b-0">
         <p class="text-body">
           <RouterLink
