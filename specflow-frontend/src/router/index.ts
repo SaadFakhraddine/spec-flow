@@ -20,7 +20,8 @@ export const routes = [
   { path: '/specs', name: 'specs', component: SpecsView },
   { path: '/specs/new', name: 'spec-new', component: CreateSpecView, meta: { admin: true } },
   { path: '/specs/:id', name: 'spec-detail', component: SpecDetailView },
-  { path: '/settings', name: 'settings', component: SettingsView },
+  { path: '/settings', redirect: '/settings/appearance' },
+  { path: '/settings/:section', name: 'settings', component: SettingsView },
   { path: '/:pathMatch(.*)*', name: 'not-found', component: NotFoundView, meta: { public: true, blank: true } },
 ]
 

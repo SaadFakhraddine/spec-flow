@@ -19,6 +19,7 @@ const links = [
 
 function active(path: string): boolean {
   if (path === '/dashboard') return route.path === '/dashboard'
+  if (path === '/settings') return route.path.startsWith('/settings')
   return route.path === path || route.path.startsWith(`${path}/`)
 }
 
