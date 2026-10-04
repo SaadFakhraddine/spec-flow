@@ -5,6 +5,7 @@ import CreateSpecView from '@/views/CreateSpecView.vue'
 import DashboardView from '@/views/DashboardView.vue'
 import LoginView from '@/views/LoginView.vue'
 import NotFoundView from '@/views/NotFoundView.vue'
+import MyWorkView from '@/views/MyWorkView.vue'
 import SettingsView from '@/views/SettingsView.vue'
 import SpecDetailView from '@/views/SpecDetailView.vue'
 import SpecsView from '@/views/SpecsView.vue'
@@ -15,6 +16,7 @@ export const routes = [
   { path: '/login', name: 'login', component: LoginView, meta: { public: true, blank: true } },
   { path: '/', redirect: '/dashboard' },
   { path: '/dashboard', name: 'dashboard', component: DashboardView },
+  { path: '/my-work', name: 'my-work', component: MyWorkView },
   { path: '/tasks', name: 'tasks', component: TasksView },
   { path: '/tasks/:id', name: 'task-detail', component: TaskDetailView },
   { path: '/specs', name: 'specs', component: SpecsView },

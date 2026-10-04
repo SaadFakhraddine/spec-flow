@@ -1,4 +1,6 @@
 import { Router } from 'express'
+import * as myWorkController from '../controllers/myWorkController'
+import { requireAuth } from '../middleware/auth'
 import { authRouter } from './auth'
 import { notificationRouter } from './notifications'
 import { savedFilterRouter } from './savedFilters'
@@ -17,3 +19,4 @@ apiRouter.use('/dashboard', dashboardRouter)
 apiRouter.use('/notifications', notificationRouter)
 apiRouter.use('/search', searchRouter)
 apiRouter.use('/saved-filters', savedFilterRouter)
+apiRouter.get('/me/work', requireAuth, myWorkController.getMyWork)

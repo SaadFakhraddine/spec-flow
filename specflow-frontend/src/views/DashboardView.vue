@@ -32,6 +32,7 @@ onMounted(() => {
 <template>
   <PageWrapper title="Dashboard" :subtitle="`${user?.name ?? ''} · ${user?.role ?? ''}`">
     <template #actions>
+      <RouterLink to="/my-work" class="text-body text-primary motion-color hover:brightness-110">My work</RouterLink>
       <RouterLink to="/tasks" class="text-body text-primary motion-color hover:brightness-110">Go to tasks</RouterLink>
       <RouterLink to="/specs" class="text-body text-primary motion-color hover:brightness-110">Go to specs</RouterLink>
     </template>

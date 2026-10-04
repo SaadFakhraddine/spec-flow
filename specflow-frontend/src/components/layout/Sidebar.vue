@@ -12,6 +12,7 @@ const { user, logout } = useAuth()
 
 const links = [
   { to: '/dashboard', label: 'Dashboard' },
+  { to: '/my-work', label: 'My work' },
   { to: '/tasks', label: 'Tasks' },
   { to: '/specs', label: 'Specs' },
   { to: '/settings', label: 'Settings' },
@@ -19,6 +20,7 @@ const links = [
 
 function active(path: string): boolean {
   if (path === '/dashboard') return route.path === '/dashboard'
+  if (path === '/my-work') return route.path === '/my-work'
   if (path === '/settings') return route.path.startsWith('/settings')
   return route.path === path || route.path.startsWith(`${path}/`)
 }
