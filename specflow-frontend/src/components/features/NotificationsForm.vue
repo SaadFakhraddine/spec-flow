@@ -25,7 +25,7 @@ async function onToggle(key: keyof NotificationPreferences, value: boolean): Pro
     <li
       v-for="option in options"
       :key="option.key"
-      class="flex items-start justify-between gap-4 border-b border-line pb-3 last:border-b-0 last:pb-0"
+      class="flex items-center justify-between gap-4 border-b border-line pb-3 last:border-b-0 last:pb-0"
     >
       <div>
         <p class="text-body font-medium">{{ option.label }}</p>
