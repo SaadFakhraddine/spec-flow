@@ -1,5 +1,6 @@
 import type { NextFunction, Request, Response } from 'express'
 import * as authService from '../services/authService'
+import type { AppearancePreferences } from '../types/api.types'
 import { REFRESH_COOKIE, clearRefreshCookie, setRefreshCookie } from '../utils/cookies'
 import { sendData } from '../utils/http'
 
@@ -65,6 +66,16 @@ export async function logout(req: Request, res: Response, next: NextFunction): P
 export async function me(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const user = await authService.getMe(req.user?.id ?? '')
+    sendData(res, user)
+  } catch (error) {
+    next(error)
+  }
+}
+
+export async function updatePreferences(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const body = req.body as Partial<AppearancePreferences>
+    const user = await authService.updatePreferences(req.user?.id ?? '', body)
     sendData(res, user)
   } catch (error) {
     next(error)

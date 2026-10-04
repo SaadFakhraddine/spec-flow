@@ -1,5 +1,6 @@
 import { User, type UserDocument } from '../models/User'
-import type { PublicUser, Role } from '../types/api.types'
+import type { AppearancePreferences, PublicUser, Role } from '../types/api.types'
+import { DEFAULT_PREFERENCES } from '../types/api.types'
 import { AppError } from '../utils/AppError'
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '../utils/jwt'
 import { escapeRegex } from '../utils/pagination'
@@ -10,8 +11,22 @@ export interface AuthResult {
   user: PublicUser
 }
 
+function prefsOf(user: UserDocument): AppearancePreferences {
+  return {
+    theme: user.preferences?.theme ?? DEFAULT_PREFERENCES.theme,
+    accent: user.preferences?.accent ?? DEFAULT_PREFERENCES.accent,
+    density: user.preferences?.density ?? DEFAULT_PREFERENCES.density,
+  }
+}
+
 function toPublic(user: UserDocument): PublicUser {
-  return { id: user.id, name: user.name, email: user.email, role: user.role }
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    preferences: prefsOf(user),
+  }
 }
 
 function issue(user: UserDocument): AuthResult {
@@ -62,6 +77,18 @@ export async function logout(token: string | undefined): Promise<void> {
 export async function getMe(userId: string): Promise<PublicUser> {
   const user = await User.findById(userId)
   if (!user) throw new AppError('User not found', 404)
+  return toPublic(user)
+}
+
+export async function updatePreferences(
+  userId: string,
+  patch: Partial<AppearancePreferences>,
+): Promise<PublicUser> {
+  const user = await User.findById(userId)
+  if (!user) throw new AppError('User not found', 404)
+  const next = { ...prefsOf(user), ...patch }
+  user.set('preferences', next)
+  await user.save()
   return toPublic(user)
 }
 

@@ -2,10 +2,28 @@ export type Role = 'admin' | 'developer'
 export type TaskStatus = 'backlog' | 'in-progress' | 'in-review' | 'done'
 export type TaskPriority = 'low' | 'medium' | 'high' | 'critical'
 export type SpecStatus = 'draft' | 'ready' | 'in-review' | 'approved'
+export type ThemePref = 'light' | 'dark' | 'system'
+export type AccentPref = 'teal' | 'amber' | 'slate'
+export type DensityPref = 'comfortable' | 'compact'
 
 export const TASK_STATUSES: TaskStatus[] = ['backlog', 'in-progress', 'in-review', 'done']
 export const TASK_PRIORITIES: TaskPriority[] = ['low', 'medium', 'high', 'critical']
 export const SPEC_STATUSES: SpecStatus[] = ['draft', 'ready', 'in-review', 'approved']
+export const THEME_PREFS: ThemePref[] = ['light', 'dark', 'system']
+export const ACCENT_PREFS: AccentPref[] = ['teal', 'amber', 'slate']
+export const DENSITY_PREFS: DensityPref[] = ['comfortable', 'compact']
+
+export interface AppearancePreferences {
+  theme: ThemePref
+  accent: AccentPref
+  density: DensityPref
+}
+
+export const DEFAULT_PREFERENCES: AppearancePreferences = {
+  theme: 'system',
+  accent: 'teal',
+  density: 'comfortable',
+}
 
 export interface Actor {
   id: string
@@ -17,6 +35,7 @@ export interface PublicUser {
   name: string
   email: string
   role: Role
+  preferences: AppearancePreferences
 }
 
 export interface UserRef {
