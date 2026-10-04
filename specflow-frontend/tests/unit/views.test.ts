@@ -85,7 +85,18 @@ async function mountTasks() {
     name: 'Ada',
     email: 'ada@specflow.dev',
     role: 'admin',
-    preferences: { theme: 'system', accent: 'teal', density: 'comfortable' },
+    preferences: {
+      theme: 'system',
+      accent: 'teal',
+      density: 'comfortable',
+      notifications: {
+        taskAssigned: true,
+        commentCreated: true,
+        mentionCreated: true,
+        taskStatus: true,
+      },
+      defaults: { tasksView: 'list' },
+    },
   }
   return mount(TasksView, { global: { plugins: [pinia, router] } })
 }

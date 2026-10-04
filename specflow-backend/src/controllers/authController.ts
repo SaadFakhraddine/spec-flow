@@ -1,6 +1,6 @@
 import type { NextFunction, Request, Response } from 'express'
 import * as authService from '../services/authService'
-import type { AppearancePreferences } from '../types/api.types'
+import type { PreferencesPatch } from '../utils/preferences'
 import { REFRESH_COOKIE, clearRefreshCookie, setRefreshCookie } from '../utils/cookies'
 import { sendData } from '../utils/http'
 
@@ -74,8 +74,18 @@ export async function me(req: Request, res: Response, next: NextFunction): Promi
 
 export async function updatePreferences(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const body = req.body as Partial<AppearancePreferences>
+    const body = req.body as PreferencesPatch
     const user = await authService.updatePreferences(req.user?.id ?? '', body)
+    sendData(res, user)
+  } catch (error) {
+    next(error)
+  }
+}
+
+export async function updateProfile(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const name = String((req.body as { name: string }).name)
+    const user = await authService.updateProfile(req.user?.id ?? '', name)
     sendData(res, user)
   } catch (error) {
     next(error)

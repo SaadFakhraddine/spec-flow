@@ -1,6 +1,6 @@
 import bcrypt from 'bcrypt'
 import mongoose, { Schema, type HydratedDocument, type Model } from 'mongoose'
-import type { AppearancePreferences, Role } from '../types/api.types'
+import type { Role, UserPreferences } from '../types/api.types'
 import { DEFAULT_PREFERENCES } from '../types/api.types'
 
 export interface IUser {
@@ -9,7 +9,7 @@ export interface IUser {
   name: string
   role: Role
   tokenVersion: number
-  preferences: AppearancePreferences
+  preferences: UserPreferences
   createdAt: Date
   updatedAt: Date
 }
@@ -26,6 +26,21 @@ const preferencesSchema = new Schema(
     theme: { type: String, enum: ['light', 'dark', 'system'], default: 'system' },
     accent: { type: String, enum: ['teal', 'amber', 'slate'], default: 'teal' },
     density: { type: String, enum: ['comfortable', 'compact'], default: 'comfortable' },
+    notifications: {
+      type: {
+        taskAssigned: { type: Boolean, default: true },
+        commentCreated: { type: Boolean, default: true },
+        mentionCreated: { type: Boolean, default: true },
+        taskStatus: { type: Boolean, default: true },
+      },
+      default: () => ({ ...DEFAULT_PREFERENCES.notifications }),
+    },
+    defaults: {
+      type: {
+        tasksView: { type: String, enum: ['list', 'board'], default: 'list' },
+      },
+      default: () => ({ ...DEFAULT_PREFERENCES.defaults }),
+    },
   },
   { _id: false },
 )
@@ -39,7 +54,11 @@ const userSchema = new Schema<IUser, UserModel, IUserMethods>(
     tokenVersion: { type: Number, default: 0, select: false },
     preferences: {
       type: preferencesSchema,
-      default: () => ({ ...DEFAULT_PREFERENCES }),
+      default: () => ({
+        ...DEFAULT_PREFERENCES,
+        notifications: { ...DEFAULT_PREFERENCES.notifications },
+        defaults: { ...DEFAULT_PREFERENCES.defaults },
+      }),
     },
   },
   { timestamps: true },

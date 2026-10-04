@@ -1,9 +1,11 @@
 import { Notification } from '../models/Notification'
 import { Spec } from '../models/Spec'
 import { Task } from '../models/Task'
-import type { Actor } from '../types/api.types'
+import { User } from '../models/User'
+import type { Actor, NotificationPreferences } from '../types/api.types'
 import { AppError } from '../utils/AppError'
 import { mapId } from '../utils/mappers'
+import { normalizePreferences } from '../utils/preferences'
 
 export interface NotificationDto {
   id: string
@@ -13,6 +15,15 @@ export interface NotificationDto {
   specId: string | null
   readAt: string | null
   createdAt: string
+}
+
+type PrefKey = keyof NotificationPreferences
+
+const TYPE_PREF: Record<string, PrefKey> = {
+  'task.assigned': 'taskAssigned',
+  'comment.created': 'commentCreated',
+  'mention.created': 'mentionCreated',
+  'task.status': 'taskStatus',
 }
 
 function toDto(doc: {
@@ -34,6 +45,18 @@ function toDto(doc: {
     readAt: doc.readAt ? doc.readAt.toISOString() : null,
     createdAt: (doc.createdAt ?? new Date()).toISOString(),
   }
+}
+
+async function filterRecipients(userIds: string[], type: string): Promise<string[]> {
+  const prefKey = TYPE_PREF[type]
+  if (!prefKey || userIds.length === 0) return userIds
+  const users = await User.find({ _id: { $in: userIds } }).select('preferences')
+  const allowed = new Set<string>()
+  for (const user of users) {
+    const prefs = normalizePreferences(user.preferences)
+    if (prefs.notifications[prefKey]) allowed.add(user.id)
+  }
+  return userIds.filter((id) => allowed.has(id))
 }
 
 export async function listNotifications(userId: string): Promise<NotificationDto[]> {
@@ -66,8 +89,10 @@ export async function notifyAssignment(
   title: string,
 ): Promise<void> {
   if (assigneeId === actorId) return
+  const [allowed] = await filterRecipients([assigneeId], 'task.assigned')
+  if (!allowed) return
   await Notification.create({
-    userId: assigneeId,
+    userId: allowed,
     type: 'task.assigned',
     message: `You were assigned to "${title}"`,
     taskId,
@@ -95,9 +120,10 @@ export async function notifyComment(
   for (const id of watcherIds(task.watchers)) recipients.add(id)
   recipients.delete(actorId)
   for (const id of excludeIds) recipients.delete(id)
-  if (recipients.size === 0) return
+  const allowed = await filterRecipients([...recipients], 'comment.created')
+  if (allowed.length === 0) return
   await Notification.insertMany(
-    [...recipients].map((userId) => ({
+    allowed.map((userId) => ({
       userId,
       type: 'comment.created',
       message: `New comment on "${task.title}": ${preview.slice(0, 80)}`,
@@ -116,9 +142,10 @@ export async function notifyStatusWatchers(
   if (!task) return
   const recipients = new Set(watcherIds(task.watchers))
   recipients.delete(actorId)
-  if (recipients.size === 0) return
+  const allowed = await filterRecipients([...recipients], 'task.status')
+  if (allowed.length === 0) return
   await Notification.insertMany(
-    [...recipients].map((userId) => ({
+    allowed.map((userId) => ({
       userId,
       type: 'task.status',
       message: `"${task.title}" moved from ${from} to ${to}`,
@@ -141,9 +168,10 @@ export async function notifyMentions(
       : (await Spec.findById(parentId).select('title'))?.title
   if (!title) return
   const recipients = mentionIds.filter((id) => id !== actorId)
-  if (!recipients.length) return
+  const allowed = await filterRecipients(recipients, 'mention.created')
+  if (!allowed.length) return
   await Notification.insertMany(
-    recipients.map((userId) => ({
+    allowed.map((userId) => ({
       userId,
       type: 'mention.created',
       message: `You were mentioned on "${title}": ${preview.slice(0, 80)}`,
@@ -163,8 +191,10 @@ export async function notifySpecComment(
   if (!spec) return
   const creator = mapId(spec.createdBy)
   if (!creator || creator === actorId || excludeIds.includes(creator)) return
+  const [allowed] = await filterRecipients([creator], 'comment.created')
+  if (!allowed) return
   await Notification.create({
-    userId: creator,
+    userId: allowed,
     type: 'comment.created',
     message: `New comment on "${spec.title}": ${preview.slice(0, 80)}`,
     specId,

@@ -14,7 +14,18 @@ const user = {
   name: 'Ada',
   email: 'ada@specflow.dev',
   role: 'admin' as const,
-  preferences: { theme: 'system' as const, accent: 'teal' as const, density: 'comfortable' as const },
+  preferences: {
+    theme: 'system' as const,
+    accent: 'teal' as const,
+    density: 'comfortable' as const,
+    notifications: {
+      taskAssigned: true,
+      commentCreated: true,
+      mentionCreated: true,
+      taskStatus: true,
+    },
+    defaults: { tasksView: 'list' as const },
+  },
 }
 
 describe('auth store', () => {

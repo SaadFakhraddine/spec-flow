@@ -42,7 +42,11 @@ export function useAppearance() {
     setLocal(next)
     if (!auth.isAuthenticated) return true
     try {
-      const response = await apiClient.patch<ApiResponse<User>>('/auth/me/preferences', next)
+      const response = await apiClient.patch<ApiResponse<User>>('/auth/me/preferences', {
+        theme: next.theme,
+        accent: next.accent,
+        density: next.density,
+      })
       auth.setUser(response.data.data)
       setLocal(response.data.data.preferences)
       return true

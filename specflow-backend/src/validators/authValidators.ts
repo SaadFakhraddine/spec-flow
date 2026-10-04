@@ -22,4 +22,15 @@ export const preferencesValidator = [
   body('theme').optional().isIn(THEME_PREFS).withMessage('Invalid theme'),
   body('accent').optional().isIn(ACCENT_PREFS).withMessage('Invalid accent'),
   body('density').optional().isIn(DENSITY_PREFS).withMessage('Invalid density'),
+  body('notifications').optional().isObject(),
+  body('notifications.taskAssigned').optional().isBoolean(),
+  body('notifications.commentCreated').optional().isBoolean(),
+  body('notifications.mentionCreated').optional().isBoolean(),
+  body('notifications.taskStatus').optional().isBoolean(),
+  body('defaults').optional().isObject(),
+  body('defaults.tasksView').optional().isIn(['list', 'board']),
+]
+
+export const profileValidator = [
+  body('name').trim().notEmpty().isLength({ max: 80 }).withMessage('Name is required'),
 ]

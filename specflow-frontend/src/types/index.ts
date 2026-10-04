@@ -5,6 +5,7 @@ export type SpecStatus = 'draft' | 'ready' | 'in-review' | 'approved'
 export type ThemePref = 'light' | 'dark' | 'system'
 export type AccentPref = 'teal' | 'amber' | 'slate'
 export type DensityPref = 'comfortable' | 'compact'
+export type TasksViewPref = 'list' | 'board'
 
 export interface AppearancePreferences {
   theme: ThemePref
@@ -12,12 +13,64 @@ export interface AppearancePreferences {
   density: DensityPref
 }
 
+export interface NotificationPreferences {
+  taskAssigned: boolean
+  commentCreated: boolean
+  mentionCreated: boolean
+  taskStatus: boolean
+}
+
+export interface DefaultPreferences {
+  tasksView: TasksViewPref
+}
+
+export interface UserPreferences extends AppearancePreferences {
+  notifications: NotificationPreferences
+  defaults: DefaultPreferences
+}
+
+export const DEFAULT_NOTIFICATION_PREFS: NotificationPreferences = {
+  taskAssigned: true,
+  commentCreated: true,
+  mentionCreated: true,
+  taskStatus: true,
+}
+
+export const DEFAULT_USER_PREFERENCES: UserPreferences = {
+  theme: 'system',
+  accent: 'teal',
+  density: 'comfortable',
+  notifications: { ...DEFAULT_NOTIFICATION_PREFS },
+  defaults: { tasksView: 'list' },
+}
+
 export interface User {
   id: string
   name: string
   email: string
   role: Role
-  preferences: AppearancePreferences
+  preferences: UserPreferences
+}
+
+export interface ProfileStats {
+  openAssigned: number
+  watching: number
+  unreadNotifications: number
+  blockedAssigned: number
+}
+
+export interface ProfileDto {
+  user: User
+  stats: ProfileStats
+  recent: ActivityItem[]
+}
+
+export interface MyWorkDto {
+  assigned: Task[]
+  watching: Task[]
+  mentioned: Task[]
+  blocked: Task[]
+  overdue: Task[]
 }
 
 export interface UserRef {

@@ -13,16 +13,43 @@ export const THEME_PREFS: ThemePref[] = ['light', 'dark', 'system']
 export const ACCENT_PREFS: AccentPref[] = ['teal', 'amber', 'slate']
 export const DENSITY_PREFS: DensityPref[] = ['comfortable', 'compact']
 
-export interface AppearancePreferences {
+export type TasksViewPref = 'list' | 'board'
+
+export interface NotificationPreferences {
+  taskAssigned: boolean
+  commentCreated: boolean
+  mentionCreated: boolean
+  taskStatus: boolean
+}
+
+export interface DefaultPreferences {
+  tasksView: TasksViewPref
+}
+
+export interface UserPreferences {
   theme: ThemePref
   accent: AccentPref
   density: DensityPref
+  notifications: NotificationPreferences
+  defaults: DefaultPreferences
 }
 
-export const DEFAULT_PREFERENCES: AppearancePreferences = {
+/** @deprecated use UserPreferences — kept as alias for appearance fields */
+export type AppearancePreferences = Pick<UserPreferences, 'theme' | 'accent' | 'density'>
+
+export const DEFAULT_NOTIFICATION_PREFS: NotificationPreferences = {
+  taskAssigned: true,
+  commentCreated: true,
+  mentionCreated: true,
+  taskStatus: true,
+}
+
+export const DEFAULT_PREFERENCES: UserPreferences = {
   theme: 'system',
   accent: 'teal',
   density: 'comfortable',
+  notifications: { ...DEFAULT_NOTIFICATION_PREFS },
+  defaults: { tasksView: 'list' },
 }
 
 export interface Actor {
@@ -35,7 +62,7 @@ export interface PublicUser {
   name: string
   email: string
   role: Role
-  preferences: AppearancePreferences
+  preferences: UserPreferences
 }
 
 export interface UserRef {

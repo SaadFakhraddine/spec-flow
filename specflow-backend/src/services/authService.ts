@@ -1,9 +1,9 @@
 import { User, type UserDocument } from '../models/User'
-import type { AppearancePreferences, PublicUser, Role } from '../types/api.types'
-import { DEFAULT_PREFERENCES } from '../types/api.types'
+import type { PublicUser, Role, UserPreferences } from '../types/api.types'
 import { AppError } from '../utils/AppError'
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '../utils/jwt'
 import { escapeRegex } from '../utils/pagination'
+import { mergePreferences, normalizePreferences, type PreferencesPatch } from '../utils/preferences'
 
 export interface AuthResult {
   accessToken: string
@@ -11,12 +11,8 @@ export interface AuthResult {
   user: PublicUser
 }
 
-function prefsOf(user: UserDocument): AppearancePreferences {
-  return {
-    theme: user.preferences?.theme ?? DEFAULT_PREFERENCES.theme,
-    accent: user.preferences?.accent ?? DEFAULT_PREFERENCES.accent,
-    density: user.preferences?.density ?? DEFAULT_PREFERENCES.density,
-  }
+function prefsOf(user: UserDocument): UserPreferences {
+  return normalizePreferences(user.preferences)
 }
 
 function toPublic(user: UserDocument): PublicUser {
@@ -80,14 +76,18 @@ export async function getMe(userId: string): Promise<PublicUser> {
   return toPublic(user)
 }
 
-export async function updatePreferences(
-  userId: string,
-  patch: Partial<AppearancePreferences>,
-): Promise<PublicUser> {
+export async function updateProfile(userId: string, name: string): Promise<PublicUser> {
   const user = await User.findById(userId)
   if (!user) throw new AppError('User not found', 404)
-  const next = { ...prefsOf(user), ...patch }
-  user.set('preferences', next)
+  user.name = name.trim()
+  await user.save()
+  return toPublic(user)
+}
+
+export async function updatePreferences(userId: string, patch: PreferencesPatch): Promise<PublicUser> {
+  const user = await User.findById(userId)
+  if (!user) throw new AppError('User not found', 404)
+  user.set('preferences', mergePreferences(prefsOf(user), patch))
   await user.save()
   return toPublic(user)
 }
