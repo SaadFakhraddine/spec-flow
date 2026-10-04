@@ -9,7 +9,7 @@ const menuOpen = ref(false)
   <div class="flex min-h-screen">
     <Sidebar :open="menuOpen" @close="menuOpen = false" />
     <div class="flex min-w-0 flex-1 flex-col">
-      <header class="flex items-center gap-3 border-b border-line bg-surface/80 px-4 py-3 md:hidden">
+      <header class="flex items-center gap-3 border-b border-line bg-surface/80 px-4 py-3 md:hidden [padding-block:var(--sf-control-y)]">
         <button
           type="button"
           class="rounded-md border border-line px-2.5 py-1 text-body"

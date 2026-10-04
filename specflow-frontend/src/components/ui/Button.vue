@@ -21,7 +21,7 @@ const styles = {
   <button
     :type="type"
     :disabled="disabled || loading"
-    class="inline-flex items-center justify-center rounded-md px-3 py-1.5 text-body font-medium motion-color disabled:cursor-not-allowed disabled:opacity-50"
+    class="sf-btn inline-flex items-center justify-center rounded-md text-body font-medium motion-color disabled:cursor-not-allowed disabled:opacity-50"
     :class="styles[variant]"
   >
     <slot v-if="!loading" />

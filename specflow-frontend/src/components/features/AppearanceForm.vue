@@ -76,7 +76,9 @@ async function patch(partial: Partial<typeof prefs.value>): Promise<void> {
 
     <section>
       <h2 class="text-section font-medium">Density</h2>
-      <p class="mt-1 text-body text-muted">Spacing for tables and panels.</p>
+      <p class="mt-1 text-body text-muted">
+        Compact shrinks page padding, controls, sidebar, and table rows so more fits on screen.
+      </p>
       <div class="mt-3 flex flex-wrap gap-2">
         <button
           v-for="option in densities"

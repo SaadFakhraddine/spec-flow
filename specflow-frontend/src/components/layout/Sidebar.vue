@@ -43,7 +43,7 @@ watch(
   />
   <aside
     id="app-sidebar"
-    class="fixed inset-y-0 left-0 z-50 flex w-56 shrink-0 flex-col overflow-visible border-r border-line bg-surface px-3 py-5 shadow-panel motion-color md:static md:z-30 md:w-52 md:translate-x-0 md:shadow-none"
+    class="sf-sidebar fixed inset-y-0 left-0 z-50 flex shrink-0 flex-col overflow-visible border-r border-line bg-surface shadow-panel motion-color md:static md:z-30 md:translate-x-0 md:shadow-none"
     :class="open ? 'translate-x-0' : '-translate-x-full md:translate-x-0'"
   >
     <div class="flex items-start justify-between gap-2 px-2">
@@ -60,12 +60,12 @@ watch(
         Close
       </button>
     </div>
-    <nav class="mt-8 flex flex-col gap-0.5" aria-label="Primary">
+    <nav class="mt-6 flex flex-col gap-0.5 md:mt-8" aria-label="Primary">
       <RouterLink
         v-for="link in links"
         :key="link.to"
         :to="link.to"
-        class="rounded-md border-l-2 px-2.5 py-2 text-body motion-color"
+        class="sf-nav-link rounded-md border-l-2 px-2.5 text-body motion-color"
         :class="active(link.to)
           ? 'border-l-primary bg-elevated text-text'
           : 'border-l-transparent text-muted hover:bg-elevated/70 hover:text-text'"
