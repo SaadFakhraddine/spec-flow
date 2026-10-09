@@ -5,3 +5,4 @@ coverage/
 *.log
 _spec_extract.txt
 .DS_Store
+specflow-frontend/portfolio-shots/

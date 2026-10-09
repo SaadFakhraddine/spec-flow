@@ -54,13 +54,29 @@ cd specflow-backend && npm test
 cd specflow-frontend && npm test
 ```
 
+## Portfolio screenshots
+
+Capture PNGs of the main views for an external portfolio site (output is **gitignored**).
+
+1. Start Mongo, seed, and run the API (`npm run seed` then `npm run dev` in `specflow-backend`).
+2. From `specflow-frontend`, set `VITE_API_URL` if needed, then:
+
+```bash
+npm run portfolio:shots
+```
+
+Images land in `specflow-frontend/portfolio-shots/` (e.g. `01-login.png`). Copy them into your portfolio repo locally — do not commit them here. CI still runs only the smoke e2e suite.
+
 ## Deploy
 
 1. Create a MongoDB Atlas free cluster and copy the connection string.
 2. Deploy `specflow-backend` to Railway (or Render). Build command `npm run build`, start command `npm start`. Set `PORT`, `MONGODB_URI`, `JWT_SECRET`, `JWT_REFRESH_SECRET`, `FRONTEND_URL`, and `NODE_ENV=production`.
 3. Deploy `specflow-frontend` to Vercel. Set `VITE_API_URL` to the Railway URL. The included `vercel.json` keeps client-side routes working.
-4. Set `FRONTEND_URL` on the API to the Vercel origin so CORS and the refresh cookie (`SameSite=None; Secure`) match.
+4. Set `FRONTEND_URL` on the API to the Vercel origin so CORS and the refresh cookie (`SameSite=None; Secure`) match. Cross-site cookie refresh relies on that cookie policy; keep API and UI on HTTPS and do not widen CORS beyond the real frontend origin.
 5. Run the seed against the Atlas database, or create the two demo users there.
+6. Public self-registration is **off** when `NODE_ENV=production` unless you set `ALLOW_PUBLIC_REGISTER=true`. Prefer seeding or inviting users in production.
+
+Dependabot is configured under `.github/dependabot.yml` for weekly npm updates on both apps.
 
 ## How to describe it
 
