@@ -15,8 +15,24 @@ export async function searchAll(q: string): Promise<{ tasks: SearchHit[]; specs:
   if (!trimmed) return { tasks: [], specs: [] }
   const pattern = { $regex: escapeRegex(trimmed), $options: 'i' }
   const [tasks, specs] = await Promise.all([
-    Task.find({ title: pattern }).sort({ updatedAt: -1 }).limit(LIMIT).select('title'),
-    Spec.find({ title: pattern }).sort({ updatedAt: -1 }).limit(LIMIT).select('title'),
+    Task.find({
+      $or: [{ title: pattern }, { description: pattern }, { tags: pattern }],
+    })
+      .sort({ updatedAt: -1 })
+      .limit(LIMIT)
+      .select('title'),
+    Spec.find({
+      archivedAt: null,
+      $or: [
+        { title: pattern },
+        { businessGoal: pattern },
+        { technicalApproach: pattern },
+        { acceptanceCriteria: pattern },
+      ],
+    })
+      .sort({ updatedAt: -1 })
+      .limit(LIMIT)
+      .select('title'),
   ])
   return {
     tasks: tasks.map((doc) => ({ id: doc.id, title: doc.title, kind: 'task' as const })),

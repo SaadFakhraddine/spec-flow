@@ -23,10 +23,17 @@ function populateTask<T extends {
 
 function applyBlockedFilter(query: Record<string, unknown>, blocked?: boolean): void {
   if (blocked !== true) return
-  query.$or = [
+  const blockedOr = [
     { blockedReason: { $exists: true, $nin: [null, ''] } },
     { 'blockedBy.0': { $exists: true } },
   ]
+  const existingAnd = Array.isArray(query.$and) ? (query.$and as unknown[]) : []
+  if (query.$or) {
+    existingAnd.push({ $or: query.$or })
+    delete query.$or
+  }
+  existingAnd.push({ $or: blockedOr })
+  query.$and = existingAnd
   query.status = query.status ?? { $ne: 'done' }
 }
 
@@ -48,7 +55,10 @@ export async function getTasks(filters: TaskFilters, pageQuery: Page, viewerId?:
   if (filters.status) query.status = filters.status
   if (filters.priority) query.priority = filters.priority
   if (filters.assignedTo) query.assignedTo = filters.assignedTo
-  if (filters.q) query.title = { $regex: escapeRegex(filters.q), $options: 'i' }
+  if (filters.q) {
+    const pattern = { $regex: escapeRegex(filters.q), $options: 'i' }
+    query.$or = [{ title: pattern }, { description: pattern }, { tags: pattern }]
+  }
   applyDueFilter(query, filters.due)
   applyBlockedFilter(query, filters.blocked)
   const skip = (pageQuery.page - 1) * pageQuery.limit

@@ -1,10 +1,8 @@
-import { Task } from '../models/Task'
 import { Spec } from '../models/Spec'
-import type { Actor, DashboardDto, TaskDto } from '../types/api.types'
-import { mapTaskSource } from '../utils/mappers'
+import { Task } from '../models/Task'
+import type { Actor, DashboardDto, SpecsByStatus } from '../types/api.types'
 import { startOfWeek } from '../utils/pagination'
 
-const USER_FIELDS = 'name email'
 const OPEN = { $ne: 'done' }
 const BLOCKED = {
   $or: [
@@ -12,6 +10,7 @@ const BLOCKED = {
     { 'blockedBy.0': { $exists: true } },
   ],
 }
+const ACTIVE_SPEC = { archivedAt: null }
 
 function scopedOpen(actor: Actor): Record<string, unknown> {
   if (actor.role === 'admin') return { status: OPEN }
@@ -29,14 +28,14 @@ async function countCompleted(actor: Actor, since: Date): Promise<number> {
   return Task.countDocuments(filter)
 }
 
-async function recentTasks(): Promise<TaskDto[]> {
-  const docs = await Task.find()
-    .sort({ updatedAt: -1 })
-    .limit(10)
-    .populate('assignedTo', USER_FIELDS)
-    .populate('createdBy', USER_FIELDS)
-    .populate('blockedBy', 'title')
-  return docs.map((doc) => mapTaskSource(doc))
+async function specsByStatus(): Promise<SpecsByStatus> {
+  const [draft, ready, inReview, approved] = await Promise.all([
+    Spec.countDocuments({ ...ACTIVE_SPEC, status: 'draft' }),
+    Spec.countDocuments({ ...ACTIVE_SPEC, status: 'ready' }),
+    Spec.countDocuments({ ...ACTIVE_SPEC, status: 'in-review' }),
+    Spec.countDocuments({ ...ACTIVE_SPEC, status: 'approved' }),
+  ])
+  return { draft, ready, inReview, approved }
 }
 
 export async function getDashboard(actor: Actor): Promise<DashboardDto> {
@@ -52,19 +51,21 @@ export async function getDashboard(actor: Actor): Promise<DashboardDto> {
     dueSoonCount,
     blockedCount,
     unspeccedOpenCount,
-    recentActivity,
+    byStatus,
   ] = await Promise.all([
     Task.countDocuments(),
     Task.countDocuments(scopedOpen(actor)),
-    Spec.countDocuments({ status: 'in-review' }),
+    Spec.countDocuments({ ...ACTIVE_SPEC, status: 'in-review' }),
     countCompleted(actor, since),
     Task.countDocuments(withAssignee(actor, { status: OPEN, dueDate: { $ne: null, $lt: now } })),
     Task.countDocuments(
       withAssignee(actor, { status: OPEN, dueDate: { $ne: null, $gte: now, $lte: week } }),
     ),
     Task.countDocuments(withAssignee(actor, { status: OPEN, ...BLOCKED })),
-    Task.countDocuments(withAssignee(actor, { status: OPEN, $or: [{ specId: null }, { specId: { $exists: false } }] })),
-    recentTasks(),
+    Task.countDocuments(
+      withAssignee(actor, { status: OPEN, $or: [{ specId: null }, { specId: { $exists: false } }] }),
+    ),
+    specsByStatus(),
   ])
   return {
     totalTasks,
@@ -75,6 +76,6 @@ export async function getDashboard(actor: Actor): Promise<DashboardDto> {
     dueSoonCount,
     blockedCount,
     unspeccedOpenCount,
-    recentActivity,
+    specsByStatus: byStatus,
   }
 }

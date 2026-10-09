@@ -28,7 +28,7 @@ describe('useDashboard', () => {
           dueSoonCount: 2,
           blockedCount: 1,
           unspeccedOpenCount: 0,
-          recentActivity: [],
+          specsByStatus: { draft: 1, ready: 0, inReview: 1, approved: 2 },
         },
       },
     })

@@ -89,6 +89,10 @@ function setView(next: 'list' | 'board'): void {
 }
 
 onMounted(() => {
+  if (typeof route.query.status === 'string') filters.value.status = route.query.status
+  if (typeof route.query.due === 'string') filters.value.due = route.query.due
+  if (typeof route.query.blocked === 'string') filters.value.blocked = route.query.blocked
+  if (typeof route.query.q === 'string') filters.value.q = route.query.q
   if (!route.query.view && preferredView.value === 'board') {
     void router.replace({ query: { ...route.query, view: 'board' } })
   }

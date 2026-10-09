@@ -12,15 +12,19 @@ const { stats, isLoading, error, load } = useDashboard()
 
 const blocks = computed(() => {
   const openLabel = user.value?.role === 'admin' ? 'All open tasks' : 'My open tasks'
+  const by = stats.value?.specsByStatus
   return [
-    { label: 'Total tasks', value: stats.value?.totalTasks ?? 0 },
-    { label: openLabel, value: stats.value?.openTasks ?? 0 },
-    { label: 'Overdue', value: stats.value?.overdueCount ?? 0 },
-    { label: 'Due in 7 days', value: stats.value?.dueSoonCount ?? 0 },
-    { label: 'Blocked', value: stats.value?.blockedCount ?? 0 },
-    { label: 'Open without spec', value: stats.value?.unspeccedOpenCount ?? 0 },
-    { label: 'Specs in review', value: stats.value?.specsInReview ?? 0 },
-    { label: 'Completed this week', value: stats.value?.completedThisWeek ?? 0 },
+    { label: 'Total tasks', value: stats.value?.totalTasks ?? 0, to: '/tasks' },
+    { label: openLabel, value: stats.value?.openTasks ?? 0, to: '/tasks' },
+    { label: 'Overdue', value: stats.value?.overdueCount ?? 0, to: '/tasks?due=overdue' },
+    { label: 'Due in 7 days', value: stats.value?.dueSoonCount ?? 0, to: '/tasks?due=soon' },
+    { label: 'Blocked', value: stats.value?.blockedCount ?? 0, to: '/tasks?blocked=true' },
+    { label: 'Open without spec', value: stats.value?.unspeccedOpenCount ?? 0, to: '/tasks' },
+    { label: 'Specs in review', value: stats.value?.specsInReview ?? 0, to: '/specs?status=in-review' },
+    { label: 'Completed this week', value: stats.value?.completedThisWeek ?? 0, to: '/tasks?status=done' },
+    { label: 'Specs draft', value: by?.draft ?? 0, to: '/specs?status=draft' },
+    { label: 'Specs ready', value: by?.ready ?? 0, to: '/specs?status=ready' },
+    { label: 'Specs approved', value: by?.approved ?? 0, to: '/specs?status=approved' },
   ]
 })
 
@@ -43,10 +47,15 @@ onMounted(() => {
     </div>
     <template v-else>
       <div class="grid grid-cols-2 gap-3 lg:grid-cols-3">
-        <div v-for="block in blocks" :key="block.label" class="sf-panel px-4 py-3">
+        <RouterLink
+          v-for="block in blocks"
+          :key="block.label"
+          :to="block.to"
+          class="sf-panel px-4 py-3 motion-color hover:border-primary/40"
+        >
           <p class="font-mono text-title text-primary">{{ block.value }}</p>
           <p class="mt-1 text-body text-muted">{{ block.label }}</p>
-        </div>
+        </RouterLink>
       </div>
       <div class="mt-8">
         <ActivityTimeline recent empty-message="Actions on tasks and specs will show up here." />
