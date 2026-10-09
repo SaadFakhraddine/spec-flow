@@ -17,7 +17,15 @@ app.use((_req, res, next) => {
 })
 const allowedOrigins = env.NODE_ENV === 'production'
   ? [env.FRONTEND_URL]
-  : Array.from(new Set([env.FRONTEND_URL, 'http://localhost:5173', 'http://localhost:5174']))
+  : Array.from(
+      new Set([
+        env.FRONTEND_URL,
+        'http://localhost:5173',
+        'http://localhost:5174',
+        'http://127.0.0.1:5173',
+        'http://127.0.0.1:5174',
+      ]),
+    )
 
 app.use(cors({ origin: allowedOrigins, credentials: true }))
 app.use(express.json({ limit: '10kb' }))

@@ -1,6 +1,8 @@
 import type { NextFunction, Request, Response } from 'express'
+import { env } from '../config/env'
 import * as authService from '../services/authService'
 import type { PreferencesPatch } from '../utils/preferences'
+import { AppError } from '../utils/AppError'
 import { REFRESH_COOKIE, clearRefreshCookie, setRefreshCookie } from '../utils/cookies'
 import { sendData } from '../utils/http'
 
@@ -17,6 +19,9 @@ interface LoginBody {
 
 export async function register(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
+    if (!env.ALLOW_PUBLIC_REGISTER) {
+      throw new AppError('Public registration is disabled', 403)
+    }
     const body = req.body as RegisterBody
     const result = await authService.register(body.name, body.email, body.password, 'developer')
     setRefreshCookie(res, result.refreshToken)

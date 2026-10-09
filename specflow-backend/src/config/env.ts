@@ -46,15 +46,24 @@ function readFrontendUrl(): string {
   return value
 }
 
+function readBool(name: string, fallback: boolean): boolean {
+  const raw = process.env[name]
+  if (raw == null || raw.trim() === '') return fallback
+  return raw === '1' || raw.toLowerCase() === 'true'
+}
+
 function loadEnv() {
   for (const name of REQUIRED) readRequired(name)
+  const nodeEnv = process.env.NODE_ENV ?? 'development'
   return {
     PORT: readPort(),
     MONGODB_URI: readRequired('MONGODB_URI'),
     JWT_SECRET: readSecret('JWT_SECRET'),
     JWT_REFRESH_SECRET: readSecret('JWT_REFRESH_SECRET'),
     FRONTEND_URL: readFrontendUrl(),
-    NODE_ENV: process.env.NODE_ENV ?? 'development',
+    NODE_ENV: nodeEnv,
+    /** When false, POST /auth/register returns 403. Defaults off in production. */
+    ALLOW_PUBLIC_REGISTER: readBool('ALLOW_PUBLIC_REGISTER', nodeEnv !== 'production'),
   }
 }
 

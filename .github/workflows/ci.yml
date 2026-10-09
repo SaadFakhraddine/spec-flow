@@ -21,7 +21,12 @@ jobs:
           cache: npm
           cache-dependency-path: specflow-backend/package-lock.json
       - run: npm ci
+      - run: npm run lint
+      - run: npm run build
       - run: npm test
+      - name: npm audit
+        continue-on-error: true
+        run: npm audit --audit-level=high
 
   frontend:
     name: Frontend tests
@@ -37,7 +42,12 @@ jobs:
           cache: npm
           cache-dependency-path: specflow-frontend/package-lock.json
       - run: npm ci
+      - run: npm run lint
+      - run: npm run build
       - run: npm test
+      - name: npm audit
+        continue-on-error: true
+        run: npm audit --audit-level=high
 
   e2e:
     name: Playwright smoke
