@@ -7,8 +7,13 @@ export function useSpecs() {
     ...storeToRefs(store),
     fetchSpecs: store.fetchSpecs,
     fetchSpecById: store.fetchSpecById,
+    fetchRevisions: store.fetchRevisions,
     createSpec: store.createSpec,
     updateSpec: store.updateSpec,
+    archiveSpec: store.archiveSpec,
+    unarchiveSpec: store.unarchiveSpec,
+    deleteSpec: store.deleteSpec,
     addTaskToSpec: store.addTaskToSpec,
+    exportCsv: store.exportCsv,
   }
 }

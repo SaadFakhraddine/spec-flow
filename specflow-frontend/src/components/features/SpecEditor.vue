@@ -1,6 +1,8 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import type { SpecForm, SpecStatus } from '@/types'
-import { specStatuses, specStatusLabel } from '@/utils/status'
+import { allowedSpecStatuses } from '@/utils/specTransitions'
+import { specStatusLabel } from '@/utils/status'
 import Select from '@/components/ui/Select.vue'
 import StringList from './StringList.vue'
 import Textarea from '@/components/ui/Textarea.vue'
@@ -14,7 +16,12 @@ const props = defineProps<{
   submitLabel: string
 }>()
 const emit = defineEmits<{ 'update:modelValue': [SpecForm]; submit: []; cancel: [] }>()
-const statusOptions = specStatuses.map((value) => ({ value, label: specStatusLabel[value] }))
+const statusOptions = computed(() =>
+  allowedSpecStatuses(props.modelValue.status).map((value) => ({
+    value,
+    label: specStatusLabel[value],
+  })),
+)
 
 function patch<K extends keyof SpecForm>(key: K, value: SpecForm[K]): void {
   emit('update:modelValue', { ...props.modelValue, [key]: value })

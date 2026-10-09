@@ -22,6 +22,20 @@ export function useActivity() {
     }
   }
 
+  async function loadForSpec(specId: string): Promise<void> {
+    isLoading.value = true
+    error.value = ''
+    try {
+      const response = await apiClient.get<ApiResponse<ActivityItem[]>>(`/specs/${specId}/activity`)
+      items.value = response.data.data
+    } catch (caught) {
+      error.value = errorMessage(caught)
+      items.value = []
+    } finally {
+      isLoading.value = false
+    }
+  }
+
   async function loadRecent(): Promise<void> {
     isLoading.value = true
     error.value = ''
@@ -36,5 +50,5 @@ export function useActivity() {
     }
   }
 
-  return { items, isLoading, error, loadForTask, loadRecent }
+  return { items, isLoading, error, loadForTask, loadForSpec, loadRecent }
 }

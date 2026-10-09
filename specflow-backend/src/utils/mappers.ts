@@ -1,38 +1,39 @@
 import type {
   ChecklistItemDto,
   SpecDto,
+  SpecRevisionDto,
+  SpecStatus,
   TaskDto,
   TaskPriority,
   TaskRef,
   TaskStatus,
   UserRef,
 } from '../types/api.types'
-import { DEFAULT_CHECKLIST, normalizeChecklist } from './checklist'
 import { AppError } from './AppError'
+import { DEFAULT_CHECKLIST, normalizeChecklist } from './checklist'
 
-interface MaybeUser {
-  _id?: unknown
-  id?: string
-  name?: string
-  email?: string
+export function mapId(value: unknown): string | null {
+  if (value == null) return null
+  if (typeof value === 'string') return value
+  if (typeof value === 'object' && value !== null) {
+    const doc = value as { id?: string; _id?: unknown }
+    if (doc.id) return doc.id
+    if (doc._id) return String(doc._id)
+  }
+  return String(value)
+}
+
+function iso(value: Date | string | null | undefined): string | null {
+  if (!value) return null
+  return value instanceof Date ? value.toISOString() : String(value)
 }
 
 export function mapUser(value: unknown): UserRef | null {
   if (!value || typeof value !== 'object') return null
-  const user = value as MaybeUser
-  if (!user.name || !user.email) return null
-  const id = user.id ?? (user._id ? String(user._id) : '')
-  if (!id) return null
-  return { id, name: user.name, email: user.email }
-}
-
-export function mapId(value: unknown): string | null {
-  if (!value) return null
-  if (typeof value === 'string') return value
-  if (typeof value === 'object' && value !== null && '_id' in value) {
-    return String((value as { _id: unknown })._id)
-  }
-  return String(value)
+  const doc = value as { id?: string; _id?: unknown; name?: string; email?: string }
+  const id = doc.id ?? (doc._id ? String(doc._id) : '')
+  if (!id || !doc.name || !doc.email) return null
+  return { id, name: doc.name, email: doc.email }
 }
 
 export function requireUser(value: unknown, label: string): UserRef {
@@ -54,19 +55,17 @@ export function isTaskPriority(value: string): value is TaskPriority {
   return value === 'low' || value === 'medium' || value === 'high' || value === 'critical'
 }
 
-function iso(value: Date | string | null | undefined): string | null {
-  if (!value) return null
-  const date = value instanceof Date ? value : new Date(value)
-  if (Number.isNaN(date.getTime())) return null
-  return date.toISOString()
+function isWatching(watchers: unknown[] | undefined, viewerId?: string): boolean {
+  if (!viewerId || !watchers?.length) return false
+  return watchers.some((entry) => mapId(entry) === viewerId)
 }
 
 interface TaskSource {
   id: string
   title: string
   description?: string
-  status: TaskStatus
-  priority: TaskPriority
+  status: TaskDto['status']
+  priority: TaskDto['priority']
   assignedTo?: unknown
   createdBy: unknown
   specId?: unknown
@@ -79,11 +78,6 @@ interface TaskSource {
   externalUrl?: string
   createdAt: Date | string
   updatedAt: Date | string
-}
-
-function isWatching(watchers: unknown[] | undefined, viewerId?: string): boolean {
-  if (!viewerId || !watchers?.length) return false
-  return watchers.some((entry) => mapId(entry) === viewerId)
 }
 
 function mapBlockedBy(entries: unknown[] | undefined): TaskRef[] {
@@ -137,7 +131,10 @@ interface SpecSource {
   edgeCases?: string[]
   acceptanceCriteria: string[]
   regressionRisks?: string
-  status: SpecDto['status']
+  status: SpecStatus
+  archivedAt?: Date | string | null
+  approvedAt?: Date | string | null
+  approvedBy?: unknown
   createdBy: unknown
   tasks?: unknown[]
   createdAt: Date | string
@@ -156,10 +153,35 @@ export function mapSpecSource(value: unknown, tasks: TaskDto[]): SpecDto {
     acceptanceCriteria: spec.acceptanceCriteria,
     regressionRisks: spec.regressionRisks ?? '',
     status: spec.status,
+    archivedAt: iso(spec.archivedAt),
+    approvedAt: iso(spec.approvedAt),
+    approvedBy: mapUser(spec.approvedBy),
     createdBy: requireUser(spec.createdBy, 'Spec author'),
     tasks,
     taskCount: spec.tasks?.length ?? tasks.length,
     createdAt: iso(spec.createdAt) ?? '',
     updatedAt: iso(spec.updatedAt) ?? '',
+  }
+}
+
+export function mapSpecRevision(value: unknown): SpecRevisionDto {
+  const doc = value as {
+    id?: string
+    _id?: unknown
+    specId: unknown
+    version: number
+    title: string
+    status: SpecStatus
+    createdBy: unknown
+    createdAt?: Date | string
+  }
+  return {
+    id: doc.id ?? String(doc._id),
+    specId: mapId(doc.specId) ?? '',
+    version: doc.version,
+    title: doc.title,
+    status: doc.status,
+    createdBy: requireUser(doc.createdBy, 'Revision author'),
+    createdAt: iso(doc.createdAt) ?? '',
   }
 }

@@ -52,6 +52,55 @@ describe('spec and dashboard routes', () => {
     expect(dashboard.body.data.openTasks).toBe(1)
     expect(dashboard.body.data.specsInReview).toBe(1)
     expect(dashboard.body.data.completedThisWeek).toBe(1)
-    expect(dashboard.body.data.recentActivity.length).toBe(2)
+    expect(dashboard.body.data.specsByStatus.inReview).toBe(1)
+  })
+
+  it('archives, deletes, and enforces status transitions', async () => {
+    const admin = await loginAs('admin', 'admin@specflow.dev')
+    const created = await admin.agent
+      .post('/specs')
+      .set('Authorization', `Bearer ${admin.token}`)
+      .send({ ...specBody, status: 'draft' })
+    const specId = created.body.data.id as string
+
+    const skip = await admin.agent
+      .patch(`/specs/${specId}`)
+      .set('Authorization', `Bearer ${admin.token}`)
+      .send({ status: 'approved' })
+    expect(skip.status).toBe(400)
+
+    await admin.agent
+      .patch(`/specs/${specId}`)
+      .set('Authorization', `Bearer ${admin.token}`)
+      .send({ status: 'ready' })
+    await admin.agent
+      .patch(`/specs/${specId}`)
+      .set('Authorization', `Bearer ${admin.token}`)
+      .send({ status: 'in-review' })
+    const approved = await admin.agent
+      .patch(`/specs/${specId}`)
+      .set('Authorization', `Bearer ${admin.token}`)
+      .send({ status: 'approved' })
+    expect(approved.status).toBe(200)
+    expect(approved.body.data.approvedBy).toBeTruthy()
+
+    const revisions = await admin.agent
+      .get(`/specs/${specId}/revisions`)
+      .set('Authorization', `Bearer ${admin.token}`)
+    expect(revisions.body.data.length).toBe(1)
+
+    await admin.agent.post(`/specs/${specId}/archive`).set('Authorization', `Bearer ${admin.token}`)
+    const listed = await admin.agent.get('/specs').set('Authorization', `Bearer ${admin.token}`)
+    expect(listed.body.total).toBe(0)
+
+    const csv = await admin.agent
+      .get('/specs/export.csv?includeArchived=true')
+      .set('Authorization', `Bearer ${admin.token}`)
+    expect(csv.status).toBe(200)
+    expect(String(csv.text)).toContain('title')
+
+    await admin.agent.delete(`/specs/${specId}`).set('Authorization', `Bearer ${admin.token}`)
+    const gone = await admin.agent.get(`/specs/${specId}`).set('Authorization', `Bearer ${admin.token}`)
+    expect(gone.status).toBe(404)
   })
 })

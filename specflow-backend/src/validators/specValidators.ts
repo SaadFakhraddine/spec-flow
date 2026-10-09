@@ -13,6 +13,8 @@ export const listSpecValidator = [
   query('limit').optional().isInt({ min: 1, max: 50 }).withMessage('Invalid limit'),
   query('status').optional().isIn(SPEC_STATUSES).withMessage('Invalid status'),
   query('q').optional().isString().trim().isLength({ max: 100 }).withMessage('Search is too long'),
+  query('includeArchived').optional().isIn(['true', 'false', '1', '0']),
+  query('archivedOnly').optional().isIn(['true', 'false', '1', '0']),
 ]
 
 export const createSpecValidator = [

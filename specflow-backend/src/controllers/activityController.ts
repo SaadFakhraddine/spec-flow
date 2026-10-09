@@ -10,6 +10,14 @@ export async function listForTask(req: Request, res: Response, next: NextFunctio
   }
 }
 
+export async function listForSpec(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    sendData(res, await activityService.listSpecActivity(String(req.params.id)))
+  } catch (error) {
+    next(error)
+  }
+}
+
 export async function listRecent(_req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     sendData(res, await activityService.listRecentActivity())

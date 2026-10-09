@@ -121,11 +121,24 @@ export interface Spec {
   acceptanceCriteria: string[]
   regressionRisks: string
   status: SpecStatus
+  archivedAt: string | null
+  approvedAt: string | null
+  approvedBy: UserRef | null
   createdBy: UserRef
   tasks: Task[]
   taskCount: number
   createdAt: string
   updatedAt: string
+}
+
+export interface SpecRevision {
+  id: string
+  specId: string
+  version: number
+  title: string
+  status: SpecStatus
+  createdBy: UserRef
+  createdAt: string
 }
 
 export interface Comment {
@@ -193,6 +206,8 @@ export interface TaskFilters {
 export interface SpecFilters {
   status?: string
   q?: string
+  includeArchived?: boolean
+  archivedOnly?: boolean
 }
 
 export interface TaskInput {
@@ -221,6 +236,13 @@ export interface SpecForm {
   status: SpecStatus
 }
 
+export interface SpecsByStatus {
+  draft: number
+  ready: number
+  inReview: number
+  approved: number
+}
+
 export interface DashboardStats {
   totalTasks: number
   openTasks: number
@@ -230,7 +252,7 @@ export interface DashboardStats {
   dueSoonCount: number
   blockedCount: number
   unspeccedOpenCount: number
-  recentActivity: Task[]
+  specsByStatus: SpecsByStatus
 }
 
 export const PAGE_LIMIT = 10

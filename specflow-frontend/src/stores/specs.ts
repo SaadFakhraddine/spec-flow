@@ -1,7 +1,14 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import apiClient from '@/composables/useApi'
-import type { ApiResponse, PaginatedResponse, Spec, SpecFilters, SpecForm } from '@/types'
+import type {
+  ApiResponse,
+  PaginatedResponse,
+  Spec,
+  SpecFilters,
+  SpecForm,
+  SpecRevision,
+} from '@/types'
 import { PAGE_LIMIT } from '@/types'
 import { errorMessage } from '@/utils/errors'
 
@@ -9,6 +16,8 @@ function cleanSpecFilters(filters: SpecFilters): Record<string, string> {
   const params: Record<string, string> = {}
   if (filters.status) params.status = filters.status
   if (filters.q) params.q = filters.q
+  if (filters.includeArchived) params.includeArchived = 'true'
+  if (filters.archivedOnly) params.archivedOnly = 'true'
   return params
 }
 
@@ -19,6 +28,7 @@ export const useSpecsStore = defineStore('specs', () => {
   const isLoading = ref(false)
   const error = ref('')
   const selectedSpec = ref<Spec | null>(null)
+  const revisions = ref<SpecRevision[]>([])
 
   async function run<T>(action: () => Promise<T>): Promise<T | null> {
     isLoading.value = true
@@ -52,6 +62,15 @@ export const useSpecsStore = defineStore('specs', () => {
     })
   }
 
+  async function fetchRevisions(id: string): Promise<void> {
+    try {
+      const response = await apiClient.get<ApiResponse<SpecRevision[]>>(`/specs/${id}/revisions`)
+      revisions.value = response.data.data
+    } catch {
+      revisions.value = []
+    }
+  }
+
   async function createSpec(data: SpecForm): Promise<Spec | null> {
     return run(async () => {
       const response = await apiClient.post<ApiResponse<Spec>>('/specs', data)
@@ -67,11 +86,45 @@ export const useSpecsStore = defineStore('specs', () => {
     })
   }
 
+  async function archiveSpec(id: string): Promise<Spec | null> {
+    return run(async () => {
+      const response = await apiClient.post<ApiResponse<Spec>>(`/specs/${id}/archive`)
+      selectedSpec.value = response.data.data
+      return response.data.data
+    })
+  }
+
+  async function unarchiveSpec(id: string): Promise<Spec | null> {
+    return run(async () => {
+      const response = await apiClient.post<ApiResponse<Spec>>(`/specs/${id}/unarchive`)
+      selectedSpec.value = response.data.data
+      return response.data.data
+    })
+  }
+
+  async function deleteSpec(id: string): Promise<boolean> {
+    const result = await run(async () => {
+      await apiClient.delete(`/specs/${id}`)
+      return true
+    })
+    return result === true
+  }
+
   async function addTaskToSpec(specId: string, taskId: string): Promise<Spec | null> {
     return run(async () => {
       const response = await apiClient.post<ApiResponse<Spec>>(`/specs/${specId}/tasks`, { taskId })
       selectedSpec.value = response.data.data
       return response.data.data
+    })
+  }
+
+  async function exportCsv(filters: SpecFilters = {}): Promise<Blob | null> {
+    return run(async () => {
+      const response = await apiClient.get('/specs/export.csv', {
+        params: cleanSpecFilters(filters),
+        responseType: 'blob',
+      })
+      return response.data as Blob
     })
   }
 
@@ -82,10 +135,16 @@ export const useSpecsStore = defineStore('specs', () => {
     isLoading,
     error,
     selectedSpec,
+    revisions,
     fetchSpecs,
     fetchSpecById,
+    fetchRevisions,
     createSpec,
     updateSpec,
+    archiveSpec,
+    unarchiveSpec,
+    deleteSpec,
     addTaskToSpec,
+    exportCsv,
   }
 })

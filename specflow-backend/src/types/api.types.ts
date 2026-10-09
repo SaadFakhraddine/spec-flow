@@ -113,11 +113,24 @@ export interface SpecDto {
   acceptanceCriteria: string[]
   regressionRisks: string
   status: SpecStatus
+  archivedAt: string | null
+  approvedAt: string | null
+  approvedBy: UserRef | null
   createdBy: UserRef
   tasks: TaskDto[]
   taskCount: number
   createdAt: string
   updatedAt: string
+}
+
+export interface SpecRevisionDto {
+  id: string
+  specId: string
+  version: number
+  title: string
+  status: SpecStatus
+  createdBy: UserRef
+  createdAt: string
 }
 
 export interface TaskInput {
@@ -162,6 +175,13 @@ export interface Page {
   limit: number
 }
 
+export interface SpecsByStatus {
+  draft: number
+  ready: number
+  inReview: number
+  approved: number
+}
+
 export interface DashboardDto {
   totalTasks: number
   openTasks: number
@@ -171,5 +191,5 @@ export interface DashboardDto {
   dueSoonCount: number
   blockedCount: number
   unspeccedOpenCount: number
-  recentActivity: TaskDto[]
+  specsByStatus: SpecsByStatus
 }

@@ -1,16 +1,20 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
 import { useSpecs } from '@/composables/useSpecs'
 import { useToast } from '@/composables/useToast'
 import type { SpecForm, SpecStatus } from '@/types'
-import { specBorder, specStatusLabel, specStatuses, taskStatusLabel } from '@/utils/status'
+import { formatDate, formatRelative } from '@/utils/format'
+import { allowedSpecStatuses } from '@/utils/specTransitions'
+import { specBorder, specStatusLabel, taskStatusLabel } from '@/utils/status'
 import { fieldErrors, specSchema } from '@/utils/validators'
 import Button from '@/components/ui/Button.vue'
+import ConfirmDialog from '@/components/ui/ConfirmDialog.vue'
 import LoadingSkeleton from '@/components/ui/LoadingSkeleton.vue'
 import Select from '@/components/ui/Select.vue'
 import PageWrapper from '@/components/layout/PageWrapper.vue'
+import ActivityTimeline from '@/components/features/ActivityTimeline.vue'
 import CommentsPanel from '@/components/features/CommentsPanel.vue'
 import LinkTaskModal from '@/components/features/LinkTaskModal.vue'
 import SpecCoverage from '@/components/features/SpecCoverage.vue'
@@ -21,21 +25,49 @@ const route = useRoute()
 const router = useRouter()
 const { user } = useAuth()
 const toast = useToast()
-const { selectedSpec, isLoading, error, fetchSpecById, updateSpec, addTaskToSpec } = useSpecs()
+const {
+  selectedSpec,
+  revisions,
+  isLoading,
+  error,
+  fetchSpecById,
+  fetchRevisions,
+  updateSpec,
+  archiveSpec,
+  unarchiveSpec,
+  deleteSpec,
+  addTaskToSpec,
+} = useSpecs()
 const editing = ref(false)
 const linking = ref(false)
+const confirmDelete = ref(false)
 const draft = ref<SpecForm | null>(null)
 const errors = ref<Record<string, string>>({})
 const isAdmin = computed(() => user.value?.role === 'admin')
-const statusOptions = specStatuses.map((value) => ({ value, label: specStatusLabel[value] }))
+const statusOptions = computed(() => {
+  const current = selectedSpec.value?.status
+  if (!current) return []
+  return allowedSpecStatuses(current).map((value) => ({ value, label: specStatusLabel[value] }))
+})
 
 function specId(): string {
   return String(route.params.id)
 }
 
+async function load(): Promise<void> {
+  await fetchSpecById(specId())
+  await fetchRevisions(specId())
+}
+
 onMounted(() => {
-  void fetchSpecById(specId())
+  void load()
 })
+watch(
+  () => route.params.id,
+  () => {
+    void load()
+  },
+)
 
 function startEdit(): void {
   if (!selectedSpec.value) return
@@ -67,13 +99,16 @@ async function save(): Promise<void> {
     return
   }
   editing.value = false
+  await fetchRevisions(specId())
   toast.success('Spec updated')
 }
 
 async function onStatus(status: string): Promise<void> {
   const updated = await updateSpec(specId(), { status: status as SpecStatus })
-  if (updated) toast.success('Status updated')
-  else toast.error(error.value || 'Could not update status')
+  if (updated) {
+    await fetchRevisions(specId())
+    toast.success('Status updated')
+  } else toast.error(error.value || 'Could not update status')
 }
 
 async function link(taskId: string): Promise<void> {
@@ -82,17 +117,39 @@ async function link(taskId: string): Promise<void> {
   if (updated) toast.success('Task linked')
   else toast.error(error.value || 'Could not link the task')
 }
+
+async function onArchiveToggle(): Promise<void> {
+  const archived = Boolean(selectedSpec.value?.archivedAt)
+  const updated = archived ? await unarchiveSpec(specId()) : await archiveSpec(specId())
+  if (updated) toast.success(archived ? 'Spec restored' : 'Spec archived')
+  else toast.error(error.value || 'Could not update archive state')
+}
+
+async function onDelete(): Promise<void> {
+  confirmDelete.value = false
+  const ok = await deleteSpec(specId())
+  if (!ok) {
+    toast.error(error.value || 'Could not delete the spec')
+    return
+  }
+  toast.success('Spec deleted')
+  await router.push('/specs')
+}
 </script>
 
 <template>
   <PageWrapper :title="selectedSpec?.title ?? 'Spec'" subtitle="Technical agreement for the work">
     <template #actions>
       <Button v-if="isAdmin && selectedSpec && !editing" variant="secondary" @click="startEdit">Edit</Button>
+      <Button v-if="isAdmin && selectedSpec" variant="secondary" @click="onArchiveToggle">
+        {{ selectedSpec.archivedAt ? 'Unarchive' : 'Archive' }}
+      </Button>
+      <Button v-if="isAdmin && selectedSpec" variant="danger" @click="confirmDelete = true">Delete</Button>
     </template>
     <LoadingSkeleton v-if="isLoading && !selectedSpec" />
     <div v-else-if="error && !selectedSpec">
       <p class="text-body text-danger">{{ error }}</p>
-      <Button class="mt-3" variant="secondary" @click="fetchSpecById(specId())">Retry</Button>
+      <Button class="mt-3" variant="secondary" @click="load">Retry</Button>
     </div>
     <SpecEditor
       v-else-if="editing && draft"
@@ -105,6 +162,9 @@ async function link(taskId: string): Promise<void> {
     />
     <div v-else-if="selectedSpec" class="grid gap-6 lg:grid-cols-[1fr_16rem]">
       <div class="flex flex-col gap-3">
+        <p v-if="selectedSpec.archivedAt" class="sf-chip w-fit bg-elevated text-muted">
+          Archived {{ formatDate(selectedSpec.archivedAt) }}
+        </p>
         <SpecSection label="Business goal" :text="selectedSpec.businessGoal" />
         <SpecSection label="Technical approach" :text="selectedSpec.technicalApproach" />
         <SpecSection label="API design" :text="selectedSpec.apiDesign || '—'" />
@@ -129,6 +189,27 @@ async function link(taskId: string): Promise<void> {
             </li>
           </ul>
         </section>
+        <section class="sf-panel p-4">
+          <h2 class="text-body font-medium">History</h2>
+          <p v-if="revisions.length === 0" class="mt-2 text-body text-muted">
+            Versions are saved when a spec is approved.
+          </p>
+          <ul v-else class="mt-2 space-y-2">
+            <li
+              v-for="rev in revisions"
+              :key="rev.id"
+              class="border-b border-line pb-2 last:border-b-0"
+            >
+              <p class="text-body">
+                v{{ rev.version }} · {{ rev.title }}
+                <span class="text-muted">({{ specStatusLabel[rev.status] }})</span>
+              </p>
+              <p class="text-label text-muted">
+                {{ rev.createdBy.name }} · {{ formatRelative(rev.createdAt) }}
+              </p>
+            </li>
+          </ul>
+        </section>
       </div>
       <aside class="space-y-4 lg:sticky lg:top-4">
         <div class="sf-panel h-fit space-y-4 p-4" :class="specBorder[selectedSpec.status]">
@@ -143,8 +224,13 @@ async function link(taskId: string): Promise<void> {
           />
           <p v-else class="sf-chip bg-elevated text-text">{{ specStatusLabel[selectedSpec.status] }}</p>
           <p class="text-label text-muted">Created by {{ selectedSpec.createdBy.name }}</p>
+          <p v-if="selectedSpec.approvedBy" class="text-label text-muted">
+            Approved by {{ selectedSpec.approvedBy.name }}
+            <span v-if="selectedSpec.approvedAt"> · {{ formatDate(selectedSpec.approvedAt) }}</span>
+          </p>
         </div>
         <SpecCoverage :spec="selectedSpec" />
+        <ActivityTimeline :spec-id="selectedSpec.id" empty-message="Spec status changes show up here." />
       </aside>
       <div class="lg:col-span-2">
         <CommentsPanel resource="specs" :parent-id="selectedSpec.id" />
@@ -155,6 +241,14 @@ async function link(taskId: string): Promise<void> {
       :linked-ids="selectedSpec.tasks.map((task) => task.id)"
       @close="linking = false"
       @pick="link"
+    />
+    <ConfirmDialog
+      v-if="confirmDelete"
+      title="Delete spec?"
+      message="Linked tasks will be unlinked. This cannot be undone."
+      confirm-label="Delete"
+      @cancel="confirmDelete = false"
+      @confirm="onDelete"
     />
   </PageWrapper>
 </template>

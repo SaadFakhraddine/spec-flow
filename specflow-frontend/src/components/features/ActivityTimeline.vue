@@ -6,14 +6,16 @@ import { formatRelative } from '@/utils/format'
 
 const props = defineProps<{
   taskId?: string
+  specId?: string
   recent?: boolean
   emptyMessage?: string
 }>()
 
-const { items, isLoading, loadForTask, loadRecent } = useActivity()
+const { items, isLoading, loadForTask, loadForSpec, loadRecent } = useActivity()
 
 async function load(): Promise<void> {
   if (props.taskId) await loadForTask(props.taskId)
+  else if (props.specId) await loadForSpec(props.specId)
   else if (props.recent) await loadRecent()
 }
 
@@ -21,7 +23,7 @@ onMounted(() => {
   void load()
 })
 watch(
-  () => props.taskId,
+  () => [props.taskId, props.specId],
   () => {
     void load()
   },
@@ -44,6 +46,13 @@ watch(
           <RouterLink
             v-if="item.taskId && recent"
             :to="`/tasks/${item.taskId}`"
+            class="text-primary hover:brightness-110"
+          >
+            {{ activityLabel(item) }}
+          </RouterLink>
+          <RouterLink
+            v-else-if="item.specId && recent"
+            :to="`/specs/${item.specId}`"
             class="text-primary hover:brightness-110"
           >
             {{ activityLabel(item) }}
