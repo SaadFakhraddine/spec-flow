@@ -16,7 +16,7 @@
   },
 
   "dependencies": {
-    "@vueuse/core": "^12.8.2",
+    "@vueuse/core": "^15.0.0",
     "axios": "^1.8.3",
     "dompurify": "^3.4.16",
     "marked": "^18.0.14",
