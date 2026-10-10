@@ -11,20 +11,13 @@ const { user } = useAuth()
 const { stats, isLoading, error, load } = useDashboard()
 
 const blocks = computed(() => {
-  const openLabel = user.value?.role === 'admin' ? 'All open tasks' : 'My open tasks'
-  const by = stats.value?.specsByStatus
+  const openLabel = user.value?.role === 'admin' ? 'Open tasks' : 'My open tasks'
   return [
-    { label: 'Total tasks', value: stats.value?.totalTasks ?? 0, to: '/tasks' },
     { label: openLabel, value: stats.value?.openTasks ?? 0, to: '/tasks' },
     { label: 'Overdue', value: stats.value?.overdueCount ?? 0, to: '/tasks?due=overdue' },
-    { label: 'Due in 7 days', value: stats.value?.dueSoonCount ?? 0, to: '/tasks?due=soon' },
     { label: 'Blocked', value: stats.value?.blockedCount ?? 0, to: '/tasks?blocked=true' },
-    { label: 'Open without spec', value: stats.value?.unspeccedOpenCount ?? 0, to: '/tasks' },
     { label: 'Specs in review', value: stats.value?.specsInReview ?? 0, to: '/specs?status=in-review' },
     { label: 'Completed this week', value: stats.value?.completedThisWeek ?? 0, to: '/tasks?status=done' },
-    { label: 'Specs draft', value: by?.draft ?? 0, to: '/specs?status=draft' },
-    { label: 'Specs ready', value: by?.ready ?? 0, to: '/specs?status=ready' },
-    { label: 'Specs approved', value: by?.approved ?? 0, to: '/specs?status=approved' },
   ]
 })
 
@@ -46,7 +39,7 @@ onMounted(() => {
       <Button class="mt-3" variant="secondary" @click="load">Retry</Button>
     </div>
     <template v-else>
-      <div class="grid grid-cols-2 gap-3 lg:grid-cols-3">
+      <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         <RouterLink
           v-for="block in blocks"
           :key="block.label"
