@@ -21,7 +21,10 @@ const {
   error,
   editing,
   linking,
+  creatingTask,
+  newTaskTitle,
   confirmDelete,
+  unlinkTaskId,
   draft,
   errors,
   isAdmin,
@@ -31,6 +34,10 @@ const {
   save,
   onStatus,
   link,
+  startCreateTask,
+  cancelCreateTask,
+  onCreateTask,
+  onUnlink,
   onArchiveToggle,
   onDelete,
   openTask,
@@ -72,22 +79,49 @@ const {
         <SpecSection label="Acceptance criteria" :items="selectedSpec.acceptanceCriteria" />
         <SpecSection label="Regression risks" :text="selectedSpec.regressionRisks || '—'" />
         <section class="sf-panel p-4">
-          <div class="mb-3 flex items-center justify-between">
+          <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
             <h2 class="text-body font-medium">Linked tasks</h2>
-            <Button v-if="isAdmin" variant="ghost" @click="linking = true">Add existing task</Button>
+            <div v-if="isAdmin" class="flex flex-wrap items-center gap-2">
+              <Button variant="ghost" @click="startCreateTask">Create task</Button>
+              <Button variant="ghost" @click="linking = true">Add existing</Button>
+            </div>
+          </div>
+          <div v-if="creatingTask" class="mb-3 flex flex-wrap items-center gap-2">
+            <input
+              v-model="newTaskTitle"
+              type="text"
+              aria-label="New task title"
+              placeholder="Task title"
+              class="sf-toolbar-control min-w-[12rem] flex-1 rounded-md border border-line bg-elevated text-body text-text motion-color placeholder:text-muted/60 focus:border-primary focus:outline-none"
+              @keydown.enter.prevent="onCreateTask"
+              @keydown.escape.prevent="cancelCreateTask"
+            />
+            <Button @click="onCreateTask">Create</Button>
+            <Button variant="ghost" @click="cancelCreateTask">Cancel</Button>
           </div>
           <ul class="space-y-2">
             <li
               v-for="task in selectedSpec.tasks"
               :key="task.id"
-              class="flex items-center gap-3 border-l-2 border-line pl-3"
+              class="flex flex-wrap items-center gap-3 border-l-2 border-line pl-3"
             >
               <button type="button" class="text-body text-primary" @click="openTask(task.id)">
                 {{ task.title }}
               </button>
               <span class="sf-chip bg-elevated text-muted">{{ taskStatusLabel[task.status] }}</span>
+              <button
+                v-if="isAdmin"
+                type="button"
+                class="ml-auto text-label text-muted motion-color hover:text-danger"
+                @click="unlinkTaskId = task.id"
+              >
+                Unlink
+              </button>
             </li>
           </ul>
+          <p v-if="selectedSpec.tasks.length === 0" class="text-body text-muted">
+            No tasks linked yet. Create one or add an existing task.
+          </p>
         </section>
         <section class="sf-panel p-4">
           <h2 class="text-body font-medium">History</h2>
@@ -149,6 +183,14 @@ const {
       confirm-label="Delete"
       @cancel="confirmDelete = false"
       @confirm="onDelete"
+    />
+    <ConfirmDialog
+      v-if="unlinkTaskId"
+      title="Unlink task?"
+      message="The task stays in the board; it just won’t be tied to this spec."
+      confirm-label="Unlink"
+      @cancel="unlinkTaskId = null"
+      @confirm="onUnlink(unlinkTaskId)"
     />
   </PageWrapper>
 </template>

@@ -2,6 +2,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
 import { useSpecs } from '@/composables/useSpecs'
+import { useTasks } from '@/composables/useTasks'
 import { useToast } from '@/composables/useToast'
 import type { SpecForm, SpecStatus } from '@/types'
 import { allowedSpecStatuses } from '@/utils/specTransitions'
@@ -25,11 +26,16 @@ export function useSpecDetail() {
     unarchiveSpec,
     deleteSpec,
     addTaskToSpec,
+    unlinkTaskFromSpec,
   } = useSpecs()
+  const { createTask, error: taskError } = useTasks()
 
   const editing = ref(false)
   const linking = ref(false)
+  const creatingTask = ref(false)
+  const newTaskTitle = ref('')
   const confirmDelete = ref(false)
+  const unlinkTaskId = ref<string | null>(null)
   const draft = ref<SpecForm | null>(null)
   const errors = ref<Record<string, string>>({})
   const isAdmin = computed(() => user.value?.role === 'admin')
@@ -44,8 +50,8 @@ export function useSpecDetail() {
   }
 
   async function load(): Promise<void> {
-    await fetchSpecById(specId())
-    await fetchRevisions(specId())
+    const id = specId()
+    await Promise.all([fetchSpecById(id), fetchRevisions(id)])
     editing.value = false
   }
 
@@ -83,22 +89,31 @@ export function useSpecDetail() {
     }
     errors.value = fieldErrors(specSchema, filled)
     if (Object.values(errors.value).some(Boolean)) return
+    const previousStatus = selectedSpec.value?.status
     const updated = await updateSpec(specId(), filled)
     if (!updated) {
       toast.error(error.value || 'Could not save the spec')
       return
     }
     editing.value = false
-    await fetchRevisions(specId())
+    // Revisions are snapshotted only on approve.
+    if (filled.status === 'approved' && previousStatus !== 'approved') {
+      await fetchRevisions(specId())
+    }
     toast.success('Spec updated')
   }
 
   async function onStatus(status: string): Promise<void> {
+    const previousStatus = selectedSpec.value?.status
     const updated = await updateSpec(specId(), { status: status as SpecStatus })
-    if (updated) {
+    if (!updated) {
+      toast.error(error.value || 'Could not update status')
+      return
+    }
+    if (status === 'approved' && previousStatus !== 'approved') {
       await fetchRevisions(specId())
-      toast.success('Status updated')
-    } else toast.error(error.value || 'Could not update status')
+    }
+    toast.success('Status updated')
   }
 
   async function link(taskId: string): Promise<void> {
@@ -106,6 +121,36 @@ export function useSpecDetail() {
     linking.value = false
     if (updated) toast.success('Task linked')
     else toast.error(error.value || 'Could not link the task')
+  }
+
+  function startCreateTask(): void {
+    creatingTask.value = true
+    newTaskTitle.value = ''
+  }
+
+  function cancelCreateTask(): void {
+    creatingTask.value = false
+    newTaskTitle.value = ''
+  }
+
+  async function onCreateTask(): Promise<void> {
+    const title = newTaskTitle.value.trim()
+    if (!title) return
+    const created = await createTask({ title, specId: specId() })
+    if (!created) {
+      toast.error(taskError.value || 'Could not create the task')
+      return
+    }
+    cancelCreateTask()
+    await fetchSpecById(specId())
+    toast.success('Task created and linked')
+  }
+
+  async function onUnlink(taskId: string): Promise<void> {
+    unlinkTaskId.value = null
+    const updated = await unlinkTaskFromSpec(specId(), taskId)
+    if (updated) toast.success('Task unlinked')
+    else toast.error(error.value || 'Could not unlink the task')
   }
 
   async function onArchiveToggle(): Promise<void> {
@@ -137,7 +182,10 @@ export function useSpecDetail() {
     error,
     editing,
     linking,
+    creatingTask,
+    newTaskTitle,
     confirmDelete,
+    unlinkTaskId,
     draft,
     errors,
     isAdmin,
@@ -147,6 +195,10 @@ export function useSpecDetail() {
     save,
     onStatus,
     link,
+    startCreateTask,
+    cancelCreateTask,
+    onCreateTask,
+    onUnlink,
     onArchiveToggle,
     onDelete,
     openTask,
