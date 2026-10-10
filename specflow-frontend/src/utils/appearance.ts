@@ -1,10 +1,10 @@
-import type { AppearancePreferences, AccentPref, DensityPref, ThemePref } from '@/types'
+import type { AppearancePreferences, DensityPref, ThemePref } from '@/types'
 
 export const APPEARANCE_KEY = 'sf-appearance'
 
 export const DEFAULT_APPEARANCE: AppearancePreferences = {
   theme: 'system',
-  accent: 'teal',
+  accent: 'amber',
   density: 'comfortable',
 }
 
@@ -27,11 +27,11 @@ export function readStoredAppearance(): AppearancePreferences {
 
 export function normalizeAppearance(value: Partial<AppearancePreferences>): AppearancePreferences {
   const themes: ThemePref[] = ['light', 'dark', 'system']
-  const accents: AccentPref[] = ['teal', 'amber', 'slate']
   const densities: DensityPref[] = ['comfortable', 'compact']
   return {
     theme: value.theme && themes.includes(value.theme) ? value.theme : DEFAULT_APPEARANCE.theme,
-    accent: value.accent && accents.includes(value.accent) ? value.accent : DEFAULT_APPEARANCE.accent,
+    // Product locks to a single amber accent; ignore legacy teal/slate prefs.
+    accent: 'amber',
     density:
       value.density && densities.includes(value.density) ? value.density : DEFAULT_APPEARANCE.density,
   }
@@ -44,6 +44,6 @@ export function persistAppearance(prefs: AppearancePreferences): void {
 export function applyAppearance(prefs: AppearancePreferences): void {
   const root = document.documentElement
   root.dataset.theme = resolveTheme(prefs.theme)
-  root.dataset.accent = prefs.accent
+  root.dataset.accent = 'amber'
   root.dataset.density = prefs.density
 }

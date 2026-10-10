@@ -12,7 +12,7 @@ const route = useRoute()
 const section = computed(() => String(route.params.section || 'appearance'))
 
 const titles: Record<string, { title: string; subtitle: string }> = {
-  appearance: { title: 'Appearance', subtitle: 'Theme, accent, and density' },
+  appearance: { title: 'Appearance', subtitle: 'Theme and density' },
   profile: { title: 'Profile', subtitle: 'How you show up on SpecFlow work' },
   notifications: { title: 'Notifications', subtitle: 'Choose which alerts reach you' },
   defaults: { title: 'Defaults', subtitle: 'Landing page, Tasks view, and scope' },

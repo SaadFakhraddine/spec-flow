@@ -17,7 +17,7 @@ const user = {
   role: 'admin' as const,
   preferences: {
     theme: 'system' as const,
-    accent: 'teal' as const,
+    accent: 'amber' as const,
     density: 'comfortable' as const,
     notifications: {
       taskAssigned: true,

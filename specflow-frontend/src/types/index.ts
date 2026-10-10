@@ -3,7 +3,7 @@ export type TaskStatus = 'backlog' | 'in-progress' | 'in-review' | 'done'
 export type TaskPriority = 'low' | 'medium' | 'high' | 'critical'
 export type SpecStatus = 'draft' | 'ready' | 'in-review' | 'approved'
 export type ThemePref = 'light' | 'dark' | 'system'
-export type AccentPref = 'teal' | 'amber' | 'slate'
+export type AccentPref = 'amber'
 export type DensityPref = 'comfortable' | 'compact'
 export type TasksViewPref = 'list' | 'board'
 export type LandingPagePref = 'dashboard' | 'my-work' | 'tasks'
@@ -42,7 +42,7 @@ export const DEFAULT_NOTIFICATION_PREFS: NotificationPreferences = {
 
 export const DEFAULT_USER_PREFERENCES: UserPreferences = {
   theme: 'system',
-  accent: 'teal',
+  accent: 'amber',
   density: 'comfortable',
   notifications: { ...DEFAULT_NOTIFICATION_PREFS },
   defaults: { tasksView: 'list', landingPage: 'dashboard', tasksScope: 'all' },

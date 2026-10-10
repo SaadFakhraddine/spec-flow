@@ -10,7 +10,6 @@ import type {
   UserPreferences,
 } from '../types/api.types'
 import {
-  ACCENT_PREFS,
   DEFAULT_PREFERENCES,
   DENSITY_PREFS,
   LANDING_PAGE_PREFS,
@@ -79,7 +78,8 @@ export function normalizePreferences(value?: unknown): UserPreferences {
   const src = toPlain(value)
   return {
     theme: readEnum<ThemePref>(src?.theme, THEME_PREFS, DEFAULT_PREFERENCES.theme),
-    accent: readEnum<AccentPref>(src?.accent, ACCENT_PREFS, DEFAULT_PREFERENCES.accent),
+    // Product locks to amber; coerce legacy teal/slate values.
+    accent: 'amber' as AccentPref,
     density: readEnum<DensityPref>(src?.density, DENSITY_PREFS, DEFAULT_PREFERENCES.density),
     notifications: readNotifications(src?.notifications),
     defaults: readDefaults(src?.defaults),
