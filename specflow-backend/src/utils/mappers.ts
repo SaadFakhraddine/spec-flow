@@ -34,8 +34,9 @@ function iso(value: Date | string | null | undefined): string | null {
 
 export function mapUser(value: unknown): UserRef | null {
   if (!value || typeof value !== 'object') return null
-  const doc = value as { id?: string; _id?: unknown; name?: string; email?: string }
-  const id = doc.id ?? (doc._id ? String(doc._id) : '')
+  const doc = value as { id?: unknown; _id?: unknown; name?: string; email?: string }
+  // Prefer _id via mapId — ObjectId.id is a Buffer and must not become actor.id
+  const id = mapId(doc._id) ?? (typeof doc.id === 'string' ? doc.id : null)
   if (!id || !doc.name || !doc.email) return null
   return { id, name: doc.name, email: doc.email }
 }

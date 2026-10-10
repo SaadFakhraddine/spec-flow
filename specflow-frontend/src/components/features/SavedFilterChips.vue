@@ -3,7 +3,6 @@ import { onMounted, ref } from 'vue'
 import type { TaskFilters } from '@/types'
 import { useSavedFilters } from '@/composables/useSavedFilters'
 import { useToast } from '@/composables/useToast'
-import Button from '@/components/ui/Button.vue'
 
 const props = defineProps<{ filters: TaskFilters }>()
 const emit = defineEmits<{ apply: [TaskFilters] }>()
@@ -34,20 +33,25 @@ async function onRemove(id: string): Promise<void> {
   if (ok) toast.success('Filter removed')
   else toast.error(error.value || 'Could not remove filter')
 }
+
+function cancelNaming(): void {
+  naming.value = false
+  name.value = ''
+}
 </script>
 
 <template>
-  <div class="mb-3 flex flex-wrap items-center gap-2">
+  <div class="mb-2 flex flex-wrap items-center gap-2">
     <button
       v-for="item in items"
       :key="item.id"
       type="button"
-      class="group inline-flex items-center gap-1 rounded-md border border-line bg-elevated px-2.5 py-1.5 text-label motion-color hover:border-primary"
+      class="sf-toolbar-control group inline-flex items-center gap-1 rounded-md border border-line bg-elevated text-label motion-color hover:border-primary"
       @click="emit('apply', { ...item.query })"
     >
       {{ item.name }}
       <span
-        class="ml-1 text-muted opacity-0 group-hover:opacity-100"
+        class="ml-1 text-muted opacity-60 group-hover:opacity-100"
         role="button"
         tabindex="0"
         aria-label="Remove saved filter"
@@ -57,19 +61,41 @@ async function onRemove(id: string): Promise<void> {
         ×
       </span>
     </button>
-    <Button v-if="!naming" variant="ghost" @click="naming = true">Save filter</Button>
+
+    <button
+      v-if="!naming"
+      type="button"
+      class="sf-toolbar-control inline-flex items-center rounded-md text-label text-muted motion-color hover:bg-elevated hover:text-text"
+      @click="naming = true"
+    >
+      Save filter
+    </button>
+
     <template v-else>
       <input
         id="saved-filter-name"
         v-model="name"
         type="text"
         aria-label="Filter name"
-        placeholder="My view"
-        class="sf-control w-40 rounded-md border border-line bg-elevated text-body text-text motion-color placeholder:text-muted/60 focus:border-primary"
+        placeholder="Name this view"
+        class="sf-toolbar-control w-44 rounded-md border border-line bg-elevated text-body text-text motion-color placeholder:text-muted/60 focus:border-primary focus:outline-none"
         @keydown.enter.prevent="onSave"
+        @keydown.escape.prevent="cancelNaming"
       />
-      <Button @click="onSave">Save</Button>
-      <Button variant="ghost" @click="naming = false">Cancel</Button>
+      <button
+        type="button"
+        class="sf-toolbar-control inline-flex items-center rounded-md bg-primary text-body font-medium text-background motion-color hover:brightness-110"
+        @click="onSave"
+      >
+        Save
+      </button>
+      <button
+        type="button"
+        class="sf-toolbar-control inline-flex items-center rounded-md text-label text-muted motion-color hover:bg-elevated hover:text-text"
+        @click="cancelNaming"
+      >
+        Cancel
+      </button>
     </template>
   </div>
 </template>

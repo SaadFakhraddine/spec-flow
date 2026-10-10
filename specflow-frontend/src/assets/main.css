@@ -250,6 +250,14 @@ html[data-density='compact'] .mt-8 {
     padding: var(--sf-filter-pad);
   }
 
+  /* Shared height for chips / inputs / actions in Tasks toolbars */
+  .sf-toolbar-control {
+    box-sizing: border-box;
+    height: 2.25rem;
+    padding-left: var(--sf-control-x);
+    padding-right: var(--sf-control-x);
+  }
+
   .sf-sidebar {
     width: var(--sf-sidebar-w);
     padding: var(--sf-sidebar-y) var(--sf-sidebar-x);
@@ -264,16 +272,6 @@ html[data-density='compact'] .mt-8 {
     @apply inline-flex items-center rounded px-1.5 py-0.5 font-mono text-label capitalize;
   }
 
-  /* Dark-theme checkbox: avoid the default bright white control */
-  .sf-check {
-    @apply size-4 shrink-0 cursor-pointer rounded border border-line bg-elevated text-primary
-      focus:ring-1 focus:ring-primary/40 focus:ring-offset-0;
-    color-scheme: dark;
-  }
-
-  .sf-check:checked {
-    @apply border-primary bg-primary;
-  }
 
   .text-title {
     font-size: var(--sf-title-size);
@@ -284,6 +282,48 @@ html[data-density='compact'] .mt-8 {
     font-size: var(--sf-section-size);
     line-height: 1.35;
   }
+}
+
+/*
+ * Unlayered so it beats @tailwindcss/forms [type=checkbox] white backgrounds.
+ * Check glyph uses background color (not white).
+ */
+input[type='checkbox'].sf-check {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 1rem;
+  height: 1rem;
+  margin: 0;
+  flex-shrink: 0;
+  cursor: pointer;
+  border: 1px solid rgb(var(--sf-line));
+  border-radius: 0.25rem;
+  background-color: rgb(var(--sf-elevated));
+  background-image: none;
+  background-size: 100% 100%;
+  background-position: center;
+  background-repeat: no-repeat;
+  color: rgb(var(--sf-accent));
+  color-scheme: dark;
+}
+
+input[type='checkbox'].sf-check:hover {
+  border-color: rgb(var(--sf-muted));
+}
+
+input[type='checkbox'].sf-check:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgb(var(--sf-bg)), 0 0 0 3px rgb(var(--sf-accent) / 0.45);
+}
+
+input[type='checkbox'].sf-check:checked {
+  border-color: rgb(var(--sf-accent));
+  background-color: rgb(var(--sf-accent));
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none'%3E%3Cpath d='M3.5 8.5L6.5 11.5L12.5 4.5' stroke='%230b1219' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+
+input[type='checkbox'].sf-check:checked:hover {
+  border-color: rgb(var(--sf-accent));
 }
 
 @media (prefers-reduced-motion: no-preference) {

@@ -1,11 +1,11 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import type { TaskFilters as Filters, User } from '@/types'
 import { taskPriorities, taskStatusLabel, taskStatuses } from '@/utils/status'
 import FilterBar from '@/components/ui/FilterBar.vue'
 import Input from '@/components/ui/Input.vue'
 import Select from '@/components/ui/Select.vue'
 import UserPicker from '@/components/ui/UserPicker.vue'
-import Button from '@/components/ui/Button.vue'
 
 const props = defineProps<{
   modelValue: Filters
@@ -43,13 +43,16 @@ function clear(): void {
 }
 
 function myTasks(): void {
-  patch({ assignedTo: props.currentUserId })
+  if (props.modelValue.assignedTo === props.currentUserId) patch({ assignedTo: '' })
+  else patch({ assignedTo: props.currentUserId })
 }
+
+const mineActive = computed(() => props.modelValue.assignedTo === props.currentUserId)
 </script>
 
 <template>
-  <FilterBar>
-    <div class="min-w-[12rem] flex-1">
+  <FilterBar class="!gap-2 !py-2">
+    <div class="min-w-[11rem] flex-1">
       <Input
         id="filter-q"
         :model-value="modelValue.q ?? ''"
@@ -58,7 +61,7 @@ function myTasks(): void {
         @update:model-value="patch({ q: $event })"
       />
     </div>
-    <div class="w-40">
+    <div class="w-36">
       <Select
         id="filter-status"
         :model-value="modelValue.status ?? ''"
@@ -67,7 +70,7 @@ function myTasks(): void {
         @update:model-value="patch({ status: $event })"
       />
     </div>
-    <div class="w-40">
+    <div class="w-36">
       <Select
         id="filter-priority"
         :model-value="modelValue.priority ?? ''"
@@ -76,7 +79,7 @@ function myTasks(): void {
         @update:model-value="patch({ priority: $event })"
       />
     </div>
-    <div v-if="isAdmin" class="w-56">
+    <div v-if="isAdmin" class="w-48">
       <UserPicker
         id="filter-assignee"
         :model-value="modelValue.assignedTo ?? ''"
@@ -85,7 +88,7 @@ function myTasks(): void {
         @update:model-value="patch({ assignedTo: $event })"
       />
     </div>
-    <div class="w-44">
+    <div class="w-40">
       <Select
         id="filter-due"
         :model-value="modelValue.due ?? ''"
@@ -94,7 +97,7 @@ function myTasks(): void {
         @update:model-value="patch({ due: $event })"
       />
     </div>
-    <div class="w-40">
+    <div class="w-36">
       <Select
         id="filter-blocked"
         :model-value="modelValue.blocked ?? ''"
@@ -103,7 +106,30 @@ function myTasks(): void {
         @update:model-value="patch({ blocked: $event })"
       />
     </div>
-    <Button variant="secondary" @click="myTasks">My tasks</Button>
-    <Button variant="ghost" @click="clear">Clear</Button>
+    <!-- Spacer matches field labels so actions sit on the control baseline -->
+    <div class="flex flex-col">
+      <span class="mb-1 block text-label text-transparent select-none" aria-hidden="true">Actions</span>
+      <div class="flex items-center gap-2">
+        <button
+          type="button"
+          class="sf-toolbar-control inline-flex items-center rounded-md border text-label motion-color"
+          :class="
+            mineActive
+              ? 'border-primary bg-primary/15 text-primary'
+              : 'border-line bg-elevated text-muted hover:border-primary/40 hover:text-text'
+          "
+          @click="myTasks"
+        >
+          My tasks
+        </button>
+        <button
+          type="button"
+          class="sf-toolbar-control inline-flex items-center rounded-md text-label text-muted motion-color hover:bg-elevated hover:text-text"
+          @click="clear"
+        >
+          Clear
+        </button>
+      </div>
+    </div>
   </FilterBar>
 </template>
