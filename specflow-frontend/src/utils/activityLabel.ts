@@ -1,7 +1,7 @@
 import type { ActivityItem } from '@/types'
 
-export function activityLabel(item: ActivityItem): string {
-  const name = item.actor.name
+export function activityLabel(item: ActivityItem, currentUserId?: string | null): string {
+  const name = currentUserId && item.actor.id === currentUserId ? 'You' : item.actor.name
   switch (item.type) {
     case 'task.created':
       return `${name} created this task`

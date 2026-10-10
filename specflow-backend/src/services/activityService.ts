@@ -69,7 +69,7 @@ export async function listSpecActivity(specId: string, limit = 30): Promise<Acti
   return docs.map((doc) => mapDoc(doc))
 }
 
-export async function listRecentActivity(limit = 15): Promise<ActivityDto[]> {
+export async function listRecentActivity(limit = 8): Promise<ActivityDto[]> {
   const docs = await Activity.find()
     .sort({ createdAt: -1 })
     .limit(limit)

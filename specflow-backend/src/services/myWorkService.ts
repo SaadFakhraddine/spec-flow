@@ -4,7 +4,7 @@ import type { TaskDto } from '../types/api.types'
 import { mapTaskSource } from '../utils/mappers'
 import { BLOCKED_TASK_OR, TASK_USER_FIELDS } from '../utils/taskQuery'
 
-const LIMIT = 10
+const LIMIT = 5
 
 export interface MyWorkDto {
   assigned: TaskDto[]
@@ -43,6 +43,9 @@ export async function getMyWork(userId: string): Promise<MyWorkDto> {
           ...open,
           watchers: userId,
           assignedTo: { $ne: userId },
+          // Blocked watch items live under Blocked — keep Watching shorter.
+          blockedReason: { $in: [null, ''] },
+          blockedBy: { $size: 0 },
         })
           .sort({ updatedAt: -1 })
           .limit(LIMIT),
