@@ -77,7 +77,12 @@ apiClient.interceptors.response.use(
       config._refreshed = true
       return refreshOnce(config, error)
     }
-    const canRetry = config._retryCount < MAX_RETRIES && (!status || RETRYABLE_CODES.includes(status))
+    const method = (config.method ?? 'get').toLowerCase()
+    const idempotent = method === 'get' || method === 'head'
+    const canRetry =
+      idempotent &&
+      config._retryCount < MAX_RETRIES &&
+      (!status || RETRYABLE_CODES.includes(status))
     if (canRetry) return retryLater(config)
     return Promise.reject(error)
   },

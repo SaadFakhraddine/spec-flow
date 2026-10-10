@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import apiClient, { registerAuthHandlers, requestRefresh } from '@/composables/useApi'
 import type { ApiResponse, User } from '@/types'
-import { setAccessToken } from '@/utils/token'
+import { clearAccessToken, setAccessToken } from '@/utils/token'
 
 interface Session {
   accessToken: string
@@ -11,15 +11,21 @@ interface Session {
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref<User | null>(null)
-  const accessToken = ref('')
   const initialized = ref(false)
-  const isAuthenticated = computed(() => Boolean(accessToken.value && user.value))
+  /** Reactive mirror of module token — Axios reads `utils/token` only. */
+  const hasAccessToken = ref(false)
+  const isAuthenticated = computed(() => hasAccessToken.value && Boolean(user.value))
   let pending: Promise<void> | null = null
+
+  function rememberToken(token: string): void {
+    setAccessToken(token)
+    hasAccessToken.value = true
+  }
 
   function clearSession(): void {
     user.value = null
-    accessToken.value = ''
-    setAccessToken('')
+    clearAccessToken()
+    hasAccessToken.value = false
   }
 
   function setUser(next: User): void {
@@ -27,15 +33,13 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   function applySession(session: Session): void {
-    accessToken.value = session.accessToken
     user.value = session.user
-    setAccessToken(session.accessToken)
+    rememberToken(session.accessToken)
   }
 
   async function refreshAccessToken(): Promise<string> {
     const token = await requestRefresh()
-    accessToken.value = token
-    setAccessToken(token)
+    rememberToken(token)
     return token
   }
 
@@ -85,7 +89,6 @@ export const useAuthStore = defineStore('auth', () => {
 
   return {
     user,
-    accessToken,
     initialized,
     isAuthenticated,
     login,
