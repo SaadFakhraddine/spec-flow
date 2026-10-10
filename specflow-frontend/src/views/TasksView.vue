@@ -42,6 +42,10 @@ const {
   onStatus,
   onCreate,
 } = useTasksPage()
+
+function bindDrawer(el: unknown): void {
+  drawerRef.value = el as { stopSaving: () => void } | null
+}
 </script>
 
 <template>
@@ -148,6 +152,6 @@ const {
       <TaskBoard v-else-if="board" :columns="board" @open="open" @status="onStatus" />
     </template>
 
-    <CreateTaskDrawer ref="drawerRef" :open="creating" @submit="onCreate" @cancel="creating = false" />
+    <CreateTaskDrawer :ref="bindDrawer" :open="creating" @submit="onCreate" @cancel="creating = false" />
   </PageWrapper>
 </template>
