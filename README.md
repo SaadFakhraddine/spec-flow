@@ -74,7 +74,8 @@ Images land in `specflow-frontend/portfolio-shots/` (e.g. `01-login.png`). Copy 
 3. Deploy `specflow-frontend` to Vercel. Set `VITE_API_URL` to `/api` so the browser talks to the same origin; `vercel.json` proxies `/api/*` to the Render/Railway API (update that destination if your API host changes). The SPA fallback rewrite stays in place.
 4. Set `FRONTEND_URL` on the API to the Vercel origin. With the `/api` proxy, also set `REFRESH_COOKIE_FIRST_PARTY=true` on the API so the refresh cookie is `SameSite=Lax` (first-party). Without the proxy, omit that flag and the API uses `SameSite=None; Secure; Partitioned` for cross-site cookies.
 5. Run the seed against the Atlas database, or create the two demo users there.
-6. Public self-registration is **off** when `NODE_ENV=production` unless you set `ALLOW_PUBLIC_REGISTER=true`. Prefer seeding or inviting users in production.
+6. Public self-registration is **off** when `NODE_ENV=production` unless you set `ALLOW_PUBLIC_REGISTER=true`. Prefer seeding or inviting users in production. Seed is blocked in production unless `ALLOW_SEED=true`.
+7. Developers may only update (or bulk-update) tasks **assigned to them**; admins can edit any task. Specs always create as `draft` and advance through status transitions.
 
 Dependabot is configured under `.github/dependabot.yml` for weekly npm updates on both apps.
 
