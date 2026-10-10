@@ -69,6 +69,9 @@ async function ensureComments(adminId: string, developerId: string): Promise<voi
 }
 
 async function seed(): Promise<void> {
+  if (process.env.NODE_ENV === 'production' && process.env.ALLOW_SEED !== 'true') {
+    throw new Error('Refusing to seed in production without ALLOW_SEED=true')
+  }
   await connectDb()
   const users = await ensureUsers()
   if (!users.admin || !users.developer) throw new Error('Seed users were not created')

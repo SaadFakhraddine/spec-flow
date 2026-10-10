@@ -10,6 +10,9 @@ import { apiRouter } from './routes'
 
 export const app = express()
 
+/** Required behind Render/Vercel so rate limits use the real client IP. */
+app.set('trust proxy', 1)
+
 app.use(helmet())
 app.use((_req, res, next) => {
   res.setHeader('X-XSS-Protection', '0')
