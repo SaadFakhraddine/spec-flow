@@ -32,7 +32,7 @@ describe('task routes', () => {
     expect(removed.status).toBe(200)
   })
 
-  it('lets a developer change status and blocks other edits', async () => {
+  it('lets a developer change status on their tasks and blocks other edits', async () => {
     const admin = await loginAs('admin', 'admin@specflow.dev')
     const developer = await loginAs('developer', 'dev@specflow.dev')
     const created = await admin.agent.post('/tasks').set('Authorization', `Bearer ${admin.token}`).send({ title: 'Review API' })
@@ -40,6 +40,17 @@ describe('task routes', () => {
 
     const forbidden = await developer.agent.post('/tasks').set('Authorization', `Bearer ${developer.token}`).send({ title: 'Nope' })
     expect(forbidden.status).toBe(403)
+
+    const unassigned = await developer.agent
+      .patch(`/tasks/${id}`)
+      .set('Authorization', `Bearer ${developer.token}`)
+      .send({ status: 'in-review' })
+    expect(unassigned.status).toBe(403)
+
+    await admin.agent
+      .post(`/tasks/${id}/assign`)
+      .set('Authorization', `Bearer ${admin.token}`)
+      .send({ userId: developer.userId })
 
     const status = await developer.agent
       .patch(`/tasks/${id}`)

@@ -3,51 +3,28 @@ import { Task } from '../models/Task'
 import type { Actor, Page, TaskDto, TaskFilters, TaskInput } from '../types/api.types'
 import { assertAdmin } from '../utils/actor'
 import { AppError } from '../utils/AppError'
+import { DEFAULT_CHECKLIST } from '../utils/checklist'
 import { mapId, mapTaskSource } from '../utils/mappers'
 import { escapeRegex } from '../utils/pagination'
+import { applyBlockedFilter, applyDueFilter, TASK_USER_FIELDS } from '../utils/taskQuery'
 import { recordActivity } from './activityService'
-import { DEFAULT_CHECKLIST } from '../utils/checklist'
 import { notifyAssignment, notifyStatusWatchers } from './notificationService'
 import { adminPatch, developerPatch } from './taskPatch'
-
-const USER_FIELDS = 'name email'
 
 function populateTask<T extends {
   populate: (path: string, select: string) => T
 }>(query: T): T {
   return query
-    .populate('assignedTo', USER_FIELDS)
-    .populate('createdBy', USER_FIELDS)
+    .populate('assignedTo', TASK_USER_FIELDS)
+    .populate('createdBy', TASK_USER_FIELDS)
     .populate('blockedBy', 'title')
 }
 
-function applyBlockedFilter(query: Record<string, unknown>, blocked?: boolean): void {
-  if (blocked !== true) return
-  const blockedOr = [
-    { blockedReason: { $exists: true, $nin: [null, ''] } },
-    { 'blockedBy.0': { $exists: true } },
-  ]
-  const existingAnd = Array.isArray(query.$and) ? (query.$and as unknown[]) : []
-  if (query.$or) {
-    existingAnd.push({ $or: query.$or })
-    delete query.$or
+function assertCanDeveloperPatch(task: { assignedTo?: unknown }, actor: Actor): void {
+  if (actor.role === 'admin') return
+  if (mapId(task.assignedTo) !== actor.id) {
+    throw new AppError('You can only update tasks assigned to you', 403)
   }
-  existingAnd.push({ $or: blockedOr })
-  query.$and = existingAnd
-  query.status = query.status ?? { $ne: 'done' }
-}
-
-function applyDueFilter(query: Record<string, unknown>, due?: 'overdue' | 'soon'): void {
-  if (!due) return
-  const now = new Date()
-  if (due === 'overdue') {
-    query.dueDate = { $ne: null, $lt: now }
-    query.status = query.status ?? { $ne: 'done' }
-    return
-  }
-  const week = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
-  query.dueDate = { $ne: null, $gte: now, $lte: week }
-  query.status = query.status ?? { $ne: 'done' }
 }
 
 export async function getTasks(filters: TaskFilters, pageQuery: Page, viewerId?: string) {
@@ -120,6 +97,7 @@ export async function updateTask(id: string, input: TaskInput, actor: Actor): Pr
   if (input.blockedBy?.includes(id)) {
     throw new AppError('A task cannot block itself', 400)
   }
+  assertCanDeveloperPatch(task, actor)
   const previousStatus = task.status
   task.set(actor.role === 'admin' ? adminPatch(input) : developerPatch(input))
   await task.save()

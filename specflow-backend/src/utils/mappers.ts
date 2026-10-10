@@ -15,10 +15,14 @@ import { DEFAULT_CHECKLIST, normalizeChecklist } from './checklist'
 export function mapId(value: unknown): string | null {
   if (value == null) return null
   if (typeof value === 'string') return value
-  if (typeof value === 'object' && value !== null) {
-    const doc = value as { id?: string; _id?: unknown }
-    if (doc.id) return doc.id
-    if (doc._id) return String(doc._id)
+  // ObjectId / Buffer-like — prefer toString, never treat ObjectId.id (Buffer) as the id
+  if (typeof value === 'object' && value !== null && !(value instanceof Date)) {
+    const doc = value as { _bsontype?: string; id?: unknown; _id?: unknown; toString?: () => string }
+    if (doc._bsontype === 'ObjectId' || Buffer.isBuffer(doc.id)) {
+      return typeof doc.toString === 'function' ? doc.toString() : String(value)
+    }
+    if (typeof doc.id === 'string' && doc.id) return doc.id
+    if (doc._id != null) return mapId(doc._id)
   }
   return String(value)
 }

@@ -2,7 +2,7 @@ import { Task } from '../models/Task'
 import type { Actor, TaskStatus } from '../types/api.types'
 import { assertAdmin } from '../utils/actor'
 import { AppError } from '../utils/AppError'
-import { isTaskStatus } from '../utils/mappers'
+import { isTaskStatus, mapId } from '../utils/mappers'
 import { recordActivity } from './activityService'
 import { notifyAssignment, notifyStatusWatchers } from './notificationService'
 
@@ -24,6 +24,9 @@ export async function bulkUpdateTasks(input: BulkInput, actor: Actor): Promise<{
   for (const id of input.ids) {
     const task = await Task.findById(id)
     if (!task) continue
+    if (actor.role !== 'admin' && mapId(task.assignedTo) !== actor.id) {
+      throw new AppError('You can only bulk-update tasks assigned to you', 403)
+    }
     if (input.status && input.status !== task.status) {
       const previous = task.status
       task.status = input.status
