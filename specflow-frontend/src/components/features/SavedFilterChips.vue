@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import type { TaskFilters } from '@/types'
 import { useSavedFilters } from '@/composables/useSavedFilters'
 import { useToast } from '@/composables/useToast'
@@ -11,13 +11,28 @@ const { items, error, load, save, remove } = useSavedFilters()
 const naming = ref(false)
 const name = ref('')
 
+const canSave = computed(() =>
+  Boolean(
+    props.filters.status ||
+      props.filters.priority ||
+      props.filters.assignedTo ||
+      props.filters.q ||
+      props.filters.due ||
+      props.filters.blocked,
+  ),
+)
+
 onMounted(() => {
   void load()
 })
 
+watch(canSave, (ok) => {
+  if (!ok && naming.value) cancelNaming()
+})
+
 async function onSave(): Promise<void> {
   const trimmed = name.value.trim()
-  if (!trimmed) return
+  if (!trimmed || !canSave.value) return
   const created = await save(trimmed, props.filters)
   if (!created) {
     toast.error(error.value || 'Could not save filter')
@@ -63,15 +78,16 @@ function cancelNaming(): void {
     </button>
 
     <button
-      v-if="!naming"
+      v-if="canSave && !naming"
       type="button"
-      class="sf-toolbar-control inline-flex items-center rounded-md text-label text-muted motion-color hover:bg-elevated hover:text-text"
+      class="sf-toolbar-control inline-flex items-center gap-1 rounded-md border border-dashed border-line text-label text-muted motion-color hover:border-primary/50 hover:text-text"
       @click="naming = true"
     >
-      Save filter
+      <span aria-hidden="true">+</span>
+      Save view
     </button>
 
-    <template v-else>
+    <template v-else-if="naming">
       <input
         id="saved-filter-name"
         v-model="name"
