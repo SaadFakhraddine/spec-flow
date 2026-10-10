@@ -1,5 +1,4 @@
 import type {
-  AccentPref,
   DefaultPreferences,
   DensityPref,
   LandingPagePref,
@@ -18,9 +17,7 @@ import {
   THEME_PREFS,
 } from '../types/api.types'
 
-export type PreferencesPatch = Partial<
-  Pick<UserPreferences, 'theme' | 'accent' | 'density'>
-> & {
+export type PreferencesPatch = Partial<Pick<UserPreferences, 'theme' | 'density'>> & {
   notifications?: Partial<NotificationPreferences>
   defaults?: Partial<DefaultPreferences>
 }
@@ -78,8 +75,6 @@ export function normalizePreferences(value?: unknown): UserPreferences {
   const src = toPlain(value)
   return {
     theme: readEnum<ThemePref>(src?.theme, THEME_PREFS, DEFAULT_PREFERENCES.theme),
-    // Product locks to amber; coerce legacy teal/slate values.
-    accent: 'amber' as AccentPref,
     density: readEnum<DensityPref>(src?.density, DENSITY_PREFS, DEFAULT_PREFERENCES.density),
     notifications: readNotifications(src?.notifications),
     defaults: readDefaults(src?.defaults),
@@ -92,7 +87,6 @@ export function mergePreferences(
 ): UserPreferences {
   return normalizePreferences({
     theme: patch.theme ?? current.theme,
-    accent: patch.accent ?? current.accent,
     density: patch.density ?? current.density,
     notifications: { ...current.notifications, ...(patch.notifications ?? {}) },
     defaults: { ...current.defaults, ...(patch.defaults ?? {}) },

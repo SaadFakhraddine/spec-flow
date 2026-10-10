@@ -87,7 +87,6 @@ async function mountTasks() {
     role: 'admin',
     preferences: {
       theme: 'system',
-      accent: 'amber',
       density: 'comfortable',
       notifications: {
         taskAssigned: true,

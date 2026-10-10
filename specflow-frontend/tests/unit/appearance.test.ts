@@ -5,17 +5,13 @@ describe('appearance utils', () => {
   it('fills defaults for invalid values', () => {
     expect(normalizeAppearance({ theme: 'neon' as never })).toEqual({
       theme: 'system',
-      accent: 'amber',
       density: 'comfortable',
     })
   })
 
-  it('keeps theme/density and locks accent to amber', () => {
-    expect(
-      normalizeAppearance({ theme: 'light', accent: 'teal' as never, density: 'compact' }),
-    ).toEqual({
+  it('keeps valid theme and density', () => {
+    expect(normalizeAppearance({ theme: 'light', density: 'compact' })).toEqual({
       theme: 'light',
-      accent: 'amber',
       density: 'compact',
     })
   })

@@ -44,7 +44,6 @@ export function useAppearance() {
     try {
       const response = await apiClient.patch<ApiResponse<User>>('/auth/me/preferences', {
         theme: next.theme,
-        accent: next.accent,
         density: next.density,
       })
       auth.setUser(response.data.data)

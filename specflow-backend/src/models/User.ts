@@ -47,8 +47,6 @@ const defaultPrefsSchema = new Schema(
 const preferencesSchema = new Schema(
   {
     theme: { type: String, enum: ['light', 'dark', 'system'], default: 'system' },
-    // Legacy teal/slate may still exist in stored prefs; API normalizes to amber.
-    accent: { type: String, enum: ['teal', 'amber', 'slate'], default: 'amber' },
     density: { type: String, enum: ['comfortable', 'compact'], default: 'comfortable' },
     notifications: {
       type: notificationPrefsSchema,

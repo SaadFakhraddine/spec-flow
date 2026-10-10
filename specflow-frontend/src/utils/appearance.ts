@@ -4,7 +4,6 @@ export const APPEARANCE_KEY = 'sf-appearance'
 
 export const DEFAULT_APPEARANCE: AppearancePreferences = {
   theme: 'system',
-  accent: 'amber',
   density: 'comfortable',
 }
 
@@ -30,8 +29,6 @@ export function normalizeAppearance(value: Partial<AppearancePreferences>): Appe
   const densities: DensityPref[] = ['comfortable', 'compact']
   return {
     theme: value.theme && themes.includes(value.theme) ? value.theme : DEFAULT_APPEARANCE.theme,
-    // Product locks to a single amber accent; ignore legacy teal/slate prefs.
-    accent: 'amber',
     density:
       value.density && densities.includes(value.density) ? value.density : DEFAULT_APPEARANCE.density,
   }
@@ -44,6 +41,6 @@ export function persistAppearance(prefs: AppearancePreferences): void {
 export function applyAppearance(prefs: AppearancePreferences): void {
   const root = document.documentElement
   root.dataset.theme = resolveTheme(prefs.theme)
-  root.dataset.accent = 'amber'
   root.dataset.density = prefs.density
+  delete root.dataset.accent
 }

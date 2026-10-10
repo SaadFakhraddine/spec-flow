@@ -8,7 +8,6 @@ export const SEED_ACCOUNTS = [
     role: 'admin' as const,
     preferences: {
       theme: 'system' as const,
-      accent: 'amber' as const,
       density: 'comfortable' as const,
       notifications: {
         taskAssigned: true,
@@ -30,7 +29,6 @@ export const SEED_ACCOUNTS = [
     role: 'developer' as const,
     preferences: {
       theme: 'dark' as const,
-      accent: 'amber' as const,
       density: 'compact' as const,
       notifications: {
         taskAssigned: true,

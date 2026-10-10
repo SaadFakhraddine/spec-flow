@@ -11,7 +11,7 @@ import type {
 } from '@/types'
 import { DEFAULT_USER_PREFERENCES } from '@/types'
 
-export type PreferencesPatch = Partial<Pick<UserPreferences, 'theme' | 'accent' | 'density'>> & {
+export type PreferencesPatch = Partial<Pick<UserPreferences, 'theme' | 'density'>> & {
   notifications?: Partial<NotificationPreferences>
   defaults?: Partial<DefaultPreferences>
 }
@@ -21,7 +21,6 @@ export function normalizeUserPreferences(
 ): UserPreferences {
   return {
     theme: value?.theme ?? DEFAULT_USER_PREFERENCES.theme,
-    accent: value?.accent ?? DEFAULT_USER_PREFERENCES.accent,
     density: value?.density ?? DEFAULT_USER_PREFERENCES.density,
     notifications: {
       ...DEFAULT_USER_PREFERENCES.notifications,
@@ -67,7 +66,6 @@ function mergeLocal(
   const base = normalizeUserPreferences(current)
   return normalizeUserPreferences({
     theme: patch.theme ?? base.theme,
-    accent: patch.accent ?? base.accent,
     density: patch.density ?? base.density,
     notifications: { ...base.notifications, ...(patch.notifications ?? {}) },
     defaults: { ...base.defaults, ...(patch.defaults ?? {}) },

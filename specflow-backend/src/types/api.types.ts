@@ -3,14 +3,12 @@ export type TaskStatus = 'backlog' | 'in-progress' | 'in-review' | 'done'
 export type TaskPriority = 'low' | 'medium' | 'high' | 'critical'
 export type SpecStatus = 'draft' | 'ready' | 'in-review' | 'approved'
 export type ThemePref = 'light' | 'dark' | 'system'
-export type AccentPref = 'amber'
 export type DensityPref = 'comfortable' | 'compact'
 
 export const TASK_STATUSES: TaskStatus[] = ['backlog', 'in-progress', 'in-review', 'done']
 export const TASK_PRIORITIES: TaskPriority[] = ['low', 'medium', 'high', 'critical']
 export const SPEC_STATUSES: SpecStatus[] = ['draft', 'ready', 'in-review', 'approved']
 export const THEME_PREFS: ThemePref[] = ['light', 'dark', 'system']
-export const ACCENT_PREFS: AccentPref[] = ['amber']
 export const DENSITY_PREFS: DensityPref[] = ['comfortable', 'compact']
 
 export type TasksViewPref = 'list' | 'board'
@@ -36,14 +34,13 @@ export interface DefaultPreferences {
 
 export interface UserPreferences {
   theme: ThemePref
-  accent: AccentPref
   density: DensityPref
   notifications: NotificationPreferences
   defaults: DefaultPreferences
 }
 
 /** @deprecated use UserPreferences — kept as alias for appearance fields */
-export type AppearancePreferences = Pick<UserPreferences, 'theme' | 'accent' | 'density'>
+export type AppearancePreferences = Pick<UserPreferences, 'theme' | 'density'>
 
 export const DEFAULT_NOTIFICATION_PREFS: NotificationPreferences = {
   taskAssigned: true,
@@ -54,7 +51,6 @@ export const DEFAULT_NOTIFICATION_PREFS: NotificationPreferences = {
 
 export const DEFAULT_PREFERENCES: UserPreferences = {
   theme: 'system',
-  accent: 'amber',
   density: 'comfortable',
   notifications: { ...DEFAULT_NOTIFICATION_PREFS },
   defaults: { tasksView: 'list', landingPage: 'dashboard', tasksScope: 'all' },

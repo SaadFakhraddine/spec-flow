@@ -1,5 +1,5 @@
 import { body } from 'express-validator'
-import { ACCENT_PREFS, DENSITY_PREFS, THEME_PREFS } from '../types/api.types'
+import { DENSITY_PREFS, THEME_PREFS } from '../types/api.types'
 
 export const registerValidator = [
   body('name').trim().notEmpty().withMessage('Name is required'),
@@ -20,7 +20,6 @@ export const loginValidator = [
 
 export const preferencesValidator = [
   body('theme').optional().isIn(THEME_PREFS).withMessage('Invalid theme'),
-  body('accent').optional().isIn(ACCENT_PREFS).withMessage('Invalid accent'),
   body('density').optional().isIn(DENSITY_PREFS).withMessage('Invalid density'),
   body('notifications').optional().isObject(),
   body('notifications.taskAssigned').optional().isBoolean(),
