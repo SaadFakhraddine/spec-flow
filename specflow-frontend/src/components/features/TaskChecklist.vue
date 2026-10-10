@@ -20,7 +20,7 @@ function toggle(key: string, done: boolean): void {
         <input
           :id="`check-${item.key}`"
           type="checkbox"
-          class="rounded border-line"
+          class="sf-check"
           :checked="item.done"
           @change="toggle(item.key, ($event.target as HTMLInputElement).checked)"
         />

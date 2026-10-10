@@ -4,7 +4,6 @@ import type { TaskFilters } from '@/types'
 import { useSavedFilters } from '@/composables/useSavedFilters'
 import { useToast } from '@/composables/useToast'
 import Button from '@/components/ui/Button.vue'
-import Input from '@/components/ui/Input.vue'
 
 const props = defineProps<{ filters: TaskFilters }>()
 const emit = defineEmits<{ apply: [TaskFilters] }>()
@@ -43,7 +42,7 @@ async function onRemove(id: string): Promise<void> {
       v-for="item in items"
       :key="item.id"
       type="button"
-      class="group inline-flex items-center gap-1 rounded-md border border-line bg-elevated px-2.5 py-1 text-label motion-color hover:border-primary"
+      class="group inline-flex items-center gap-1 rounded-md border border-line bg-elevated px-2.5 py-1.5 text-label motion-color hover:border-primary"
       @click="emit('apply', { ...item.query })"
     >
       {{ item.name }}
@@ -59,12 +58,18 @@ async function onRemove(id: string): Promise<void> {
       </span>
     </button>
     <Button v-if="!naming" variant="ghost" @click="naming = true">Save filter</Button>
-    <div v-else class="flex items-end gap-2">
-      <div class="w-40">
-        <Input id="saved-filter-name" v-model="name" label="Name" placeholder="My view" />
-      </div>
+    <template v-else>
+      <input
+        id="saved-filter-name"
+        v-model="name"
+        type="text"
+        aria-label="Filter name"
+        placeholder="My view"
+        class="sf-control w-40 rounded-md border border-line bg-elevated text-body text-text motion-color placeholder:text-muted/60 focus:border-primary"
+        @keydown.enter.prevent="onSave"
+      />
       <Button @click="onSave">Save</Button>
       <Button variant="ghost" @click="naming = false">Cancel</Button>
-    </div>
+    </template>
   </div>
 </template>

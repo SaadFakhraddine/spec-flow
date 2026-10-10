@@ -264,6 +264,17 @@ html[data-density='compact'] .mt-8 {
     @apply inline-flex items-center rounded px-1.5 py-0.5 font-mono text-label capitalize;
   }
 
+  /* Dark-theme checkbox: avoid the default bright white control */
+  .sf-check {
+    @apply size-4 shrink-0 cursor-pointer rounded border border-line bg-elevated text-primary
+      focus:ring-1 focus:ring-primary/40 focus:ring-offset-0;
+    color-scheme: dark;
+  }
+
+  .sf-check:checked {
+    @apply border-primary bg-primary;
+  }
+
   .text-title {
     font-size: var(--sf-title-size);
     line-height: 1.25;

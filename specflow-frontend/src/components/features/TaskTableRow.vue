@@ -31,7 +31,7 @@ function onRowClick(event: MouseEvent): void {
     <td class="px-3 py-2.5" @click.stop>
       <input
         type="checkbox"
-        class="rounded border-line"
+        class="sf-check"
         :checked="props.selected"
         :aria-label="`Select ${task.title}`"
         @change="emit('toggle', ($event.target as HTMLInputElement).checked)"

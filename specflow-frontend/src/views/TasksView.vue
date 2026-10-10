@@ -100,7 +100,7 @@ const {
               <th class="w-10">
                 <input
                   type="checkbox"
-                  class="rounded border-line"
+                  class="sf-check"
                   :checked="tasks.length > 0 && selected.length === tasks.length"
                   aria-label="Select all tasks"
                   @change="toggleAll(($event.target as HTMLInputElement).checked)"
