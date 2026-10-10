@@ -6,6 +6,7 @@ import type { PublicUser } from '../types/api.types'
 import { AppError } from '../utils/AppError'
 import { requireUser } from '../utils/mappers'
 import { normalizePreferences } from '../utils/preferences'
+import { BLOCKED_TASK_OR } from '../utils/taskQuery'
 import type { ActivityDto } from './activityService'
 
 export interface ProfileStats {
@@ -62,11 +63,6 @@ export async function getProfile(userId: string): Promise<ProfileDto> {
   const user = await User.findById(userId)
   if (!user) throw new AppError('User not found', 404)
 
-  const blockedOr = [
-    { blockedReason: { $exists: true, $nin: [null, ''] } },
-    { 'blockedBy.0': { $exists: true } },
-  ]
-
   const [openAssigned, watching, unreadNotifications, blockedAssigned, recentDocs] =
     await Promise.all([
       Task.countDocuments({ assignedTo: userId, status: { $ne: 'done' } }),
@@ -75,7 +71,7 @@ export async function getProfile(userId: string): Promise<ProfileDto> {
       Task.countDocuments({
         assignedTo: userId,
         status: { $ne: 'done' },
-        $or: blockedOr,
+        $or: [...BLOCKED_TASK_OR],
       }),
       Activity.find({
         $or: [{ actorId: userId }, { type: 'task.assigned', 'meta.userId': userId }],

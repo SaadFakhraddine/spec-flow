@@ -2,14 +2,10 @@ import { Spec } from '../models/Spec'
 import { Task } from '../models/Task'
 import type { Actor, DashboardDto, SpecsByStatus } from '../types/api.types'
 import { startOfWeek } from '../utils/pagination'
+import { BLOCKED_TASK_OR } from '../utils/taskQuery'
 
 const OPEN = { $ne: 'done' }
-const BLOCKED = {
-  $or: [
-    { blockedReason: { $exists: true, $nin: [null, ''] } },
-    { 'blockedBy.0': { $exists: true } },
-  ],
-}
+const BLOCKED = { $or: [...BLOCKED_TASK_OR] }
 const ACTIVE_SPEC = { archivedAt: null }
 
 function scopedOpen(actor: Actor): Record<string, unknown> {
@@ -53,7 +49,9 @@ export async function getDashboard(actor: Actor): Promise<DashboardDto> {
     unspeccedOpenCount,
     byStatus,
   ] = await Promise.all([
-    Task.countDocuments(),
+    actor.role === 'admin'
+      ? Task.countDocuments()
+      : Task.countDocuments({ assignedTo: actor.id }),
     Task.countDocuments(scopedOpen(actor)),
     Spec.countDocuments({ ...ACTIVE_SPEC, status: 'in-review' }),
     countCompleted(actor, since),

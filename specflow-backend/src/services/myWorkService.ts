@@ -2,8 +2,8 @@ import { Comment } from '../models/Comment'
 import { Task } from '../models/Task'
 import type { TaskDto } from '../types/api.types'
 import { mapTaskSource } from '../utils/mappers'
+import { BLOCKED_TASK_OR, TASK_USER_FIELDS } from '../utils/taskQuery'
 
-const USER_FIELDS = 'name email'
 const LIMIT = 10
 
 export interface MyWorkDto {
@@ -18,17 +18,12 @@ function populateTask<T extends {
   populate: (path: string, select: string) => T
 }>(query: T): T {
   return query
-    .populate('assignedTo', USER_FIELDS)
-    .populate('createdBy', USER_FIELDS)
+    .populate('assignedTo', TASK_USER_FIELDS)
+    .populate('createdBy', TASK_USER_FIELDS)
     .populate('blockedBy', 'title')
 }
 
-const blockedClause = {
-  $or: [
-    { blockedReason: { $exists: true, $nin: [null, ''] } },
-    { 'blockedBy.0': { $exists: true } },
-  ],
-}
+const blockedClause = { $or: [...BLOCKED_TASK_OR] }
 
 async function mapTasks(docs: unknown[], viewerId: string): Promise<TaskDto[]> {
   return docs.map((doc) => mapTaskSource(doc, viewerId))
