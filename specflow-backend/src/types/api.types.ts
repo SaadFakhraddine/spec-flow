@@ -127,6 +127,7 @@ export interface SpecDto {
   createdBy: UserRef
   tasks: TaskDto[]
   taskCount: number
+  tasksDone: number
   createdAt: string
   updatedAt: string
 }

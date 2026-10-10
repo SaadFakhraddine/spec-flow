@@ -10,11 +10,14 @@ function listFilters(req: Request) {
     readText(req.query.includeArchived) === 'true' || readText(req.query.includeArchived) === '1'
   const archivedOnly =
     readText(req.query.archivedOnly) === 'true' || readText(req.query.archivedOnly) === '1'
+  const needsTasks =
+    readText(req.query.needsTasks) === 'true' || readText(req.query.needsTasks) === '1'
   return {
     status: readText(req.query.status),
     q: readText(req.query.q),
     includeArchived,
     archivedOnly,
+    needsTasks,
   }
 }
 
@@ -107,6 +110,21 @@ export async function linkTask(req: Request, res: Response, next: NextFunction):
   try {
     const taskId = String((req.body as { taskId: string }).taskId)
     sendData(res, await specService.addTaskToSpec(String(req.params.id), taskId, actorFrom(req)))
+  } catch (error) {
+    next(error)
+  }
+}
+
+export async function unlinkTask(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    sendData(
+      res,
+      await specService.unlinkTaskFromSpec(
+        String(req.params.id),
+        String(req.params.taskId),
+        actorFrom(req),
+      ),
+    )
   } catch (error) {
     next(error)
   }

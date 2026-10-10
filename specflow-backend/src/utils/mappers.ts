@@ -146,8 +146,15 @@ interface SpecSource {
   updatedAt: Date | string
 }
 
-export function mapSpecSource(value: unknown, tasks: TaskDto[]): SpecDto {
+export function mapSpecSource(
+  value: unknown,
+  tasks: TaskDto[],
+  coverage?: { taskCount?: number; tasksDone?: number },
+): SpecDto {
   const spec = value as SpecSource
+  const taskCount = coverage?.taskCount ?? (tasks.length > 0 ? tasks.length : (spec.tasks?.length ?? 0))
+  const tasksDone =
+    coverage?.tasksDone ?? tasks.filter((task) => task.status === 'done').length
   return {
     id: spec.id,
     title: spec.title,
@@ -163,7 +170,8 @@ export function mapSpecSource(value: unknown, tasks: TaskDto[]): SpecDto {
     approvedBy: mapUser(spec.approvedBy),
     createdBy: requireUser(spec.createdBy, 'Spec author'),
     tasks,
-    taskCount: spec.tasks?.length ?? tasks.length,
+    taskCount,
+    tasksDone,
     createdAt: iso(spec.createdAt) ?? '',
     updatedAt: iso(spec.updatedAt) ?? '',
   }

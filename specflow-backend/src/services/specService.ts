@@ -1,3 +1,4 @@
+import mongoose from 'mongoose'
 import { Spec } from '../models/Spec'
 import { SpecRevision } from '../models/SpecRevision'
 import { Task } from '../models/Task'
@@ -12,7 +13,7 @@ import type {
 import { assertAdmin } from '../utils/actor'
 import { AppError } from '../utils/AppError'
 import { rowsToCsv } from '../utils/csv'
-import { mapSpecRevision, mapSpecSource, mapTaskSource } from '../utils/mappers'
+import { mapId, mapSpecRevision, mapSpecSource, mapTaskSource } from '../utils/mappers'
 import { escapeRegex } from '../utils/pagination'
 import { assertSpecTransition } from '../utils/specTransitions'
 import { recordActivity } from './activityService'
@@ -25,6 +26,7 @@ export interface SpecListFilters {
   q?: string
   includeArchived?: boolean
   archivedOnly?: boolean
+  needsTasks?: boolean
 }
 
 async function loadSpec(id: string) {
@@ -33,20 +35,25 @@ async function loadSpec(id: string) {
     .populate('approvedBy', USER_FIELDS)
     .populate({
       path: 'tasks',
+      // Linked-task UI only needs identity + status; skip nested blocker populate.
       populate: [
         { path: 'assignedTo', select: USER_FIELDS },
         { path: 'createdBy', select: USER_FIELDS },
-        { path: 'blockedBy', select: 'title' },
       ],
     })
   if (!spec) throw new AppError('Spec not found', 404)
   return spec
 }
 
-function toDto(spec: unknown, tasks: unknown[]): SpecDto {
+function toDto(
+  spec: unknown,
+  tasks: unknown[],
+  coverage?: { taskCount?: number; tasksDone?: number },
+): SpecDto {
   return mapSpecSource(
     spec,
     tasks.map((task) => mapTaskSource(task)),
+    coverage,
   )
 }
 
@@ -55,6 +62,7 @@ function buildListQuery(filters: SpecListFilters): Record<string, unknown> {
   if (filters.status) query.status = filters.status
   if (filters.archivedOnly) query.archivedAt = { $ne: null }
   else if (!filters.includeArchived) query.archivedAt = null
+  if (filters.needsTasks) query.tasks = { $size: 0 }
   if (filters.q) {
     const pattern = { $regex: escapeRegex(filters.q), $options: 'i' }
     query.$or = [
@@ -67,6 +75,29 @@ function buildListQuery(filters: SpecListFilters): Record<string, unknown> {
   return query
 }
 
+async function doneCountsForSpecs(
+  docs: Array<{ id?: string; _id: unknown; tasks?: unknown[] }>,
+): Promise<Map<string, number>> {
+  const counts = new Map<string, number>()
+  const withTasks = docs.filter((doc) => (doc.tasks?.length ?? 0) > 0)
+  if (withTasks.length === 0) return counts
+
+  const objectIds = withTasks
+    .map((doc) => {
+      const id = mapId(doc._id) ?? doc.id
+      return id && mongoose.isValidObjectId(id) ? new mongoose.Types.ObjectId(id) : null
+    })
+    .filter((id): id is mongoose.Types.ObjectId => Boolean(id))
+  if (objectIds.length === 0) return counts
+
+  const rows = await Task.aggregate<{ _id: mongoose.Types.ObjectId; count: number }>([
+    { $match: { specId: { $in: objectIds }, status: 'done' } },
+    { $group: { _id: '$specId', count: { $sum: 1 } } },
+  ])
+  for (const row of rows) counts.set(String(row._id), row.count)
+  return counts
+}
+
 export async function getSpecs(pageQuery: Page, filters: SpecListFilters = {}) {
   const { page, limit } = pageQuery
   const skip = (page - 1) * limit
@@ -76,11 +107,21 @@ export async function getSpecs(pageQuery: Page, filters: SpecListFilters = {}) {
       .sort({ updatedAt: -1 })
       .skip(skip)
       .limit(limit)
-      .populate('createdBy', USER_FIELDS)
-      .populate('approvedBy', USER_FIELDS),
+      .populate('createdBy', USER_FIELDS),
     Spec.countDocuments(query),
   ])
-  return { data: docs.map((doc) => toDto(doc, [])), total, page, limit }
+  const doneBySpec = await doneCountsForSpecs(docs)
+  return {
+    data: docs.map((doc) =>
+      toDto(doc, [], {
+        taskCount: doc.tasks?.length ?? 0,
+        tasksDone: doneBySpec.get(doc.id) ?? 0,
+      }),
+    ),
+    total,
+    page,
+    limit,
+  }
 }
 
 export async function getSpecById(id: string): Promise<SpecDto> {
@@ -210,11 +251,13 @@ export async function deleteSpec(id: string, actor: Actor): Promise<void> {
 }
 
 export async function listRevisions(id: string): Promise<SpecRevisionDto[]> {
-  const exists = await Spec.exists({ _id: id })
+  const [exists, docs] = await Promise.all([
+    Spec.exists({ _id: id }),
+    SpecRevision.find({ specId: id })
+      .sort({ version: -1 })
+      .populate('createdBy', USER_FIELDS),
+  ])
   if (!exists) throw new AppError('Spec not found', 404)
-  const docs = await SpecRevision.find({ specId: id })
-    .sort({ version: -1 })
-    .populate('createdBy', USER_FIELDS)
   return docs.map((doc) => mapSpecRevision(doc))
 }
 
@@ -224,6 +267,7 @@ export async function exportSpecsCsv(filters: SpecListFilters): Promise<string> 
     .sort({ updatedAt: -1 })
     .limit(EXPORT_CAP)
     .populate('createdBy', USER_FIELDS)
+  const doneBySpec = await doneCountsForSpecs(docs)
   const headers = [
     'id',
     'title',
@@ -231,6 +275,7 @@ export async function exportSpecsCsv(filters: SpecListFilters): Promise<string> 
     'archived',
     'createdBy',
     'taskCount',
+    'tasksDone',
     'createdAt',
     'updatedAt',
   ]
@@ -241,6 +286,7 @@ export async function exportSpecsCsv(filters: SpecListFilters): Promise<string> 
     doc.archivedAt ? 'yes' : 'no',
     (doc.createdBy as { name?: string })?.name ?? '',
     String(doc.tasks?.length ?? 0),
+    String(doneBySpec.get(doc.id) ?? 0),
     doc.createdAt?.toISOString?.() ?? '',
     doc.updatedAt?.toISOString?.() ?? '',
   ])
@@ -263,5 +309,24 @@ export async function addTaskToSpec(specId: string, taskId: string, actor: Actor
   await moveTask(task._id, task.specId, specId)
   task.set('specId', spec._id)
   await task.save()
+  return getSpecById(specId)
+}
+
+export async function unlinkTaskFromSpec(
+  specId: string,
+  taskId: string,
+  actor: Actor,
+): Promise<SpecDto> {
+  assertAdmin(actor)
+  const spec = await Spec.findById(specId)
+  if (!spec) throw new AppError('Spec not found', 404)
+  const task = await Task.findById(taskId)
+  if (!task) throw new AppError('Task not found', 404)
+  if (mapId(task.specId) !== spec.id) {
+    throw new AppError('Task is not linked to this spec', 400)
+  }
+  task.set('specId', null)
+  await task.save()
+  await Spec.findByIdAndUpdate(specId, { $pull: { tasks: task._id } })
   return getSpecById(specId)
 }

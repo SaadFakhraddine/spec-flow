@@ -15,6 +15,12 @@ export const listSpecValidator = [
   query('q').optional().isString().trim().isLength({ max: 100 }).withMessage('Search is too long'),
   query('includeArchived').optional().isIn(['true', 'false', '1', '0']),
   query('archivedOnly').optional().isIn(['true', 'false', '1', '0']),
+  query('needsTasks').optional().isIn(['true', 'false', '1', '0']),
+]
+
+export const unlinkTaskValidator = [
+  param('id').isMongoId().withMessage('Invalid spec id'),
+  param('taskId').isMongoId().withMessage('Invalid task id'),
 ]
 
 export const createSpecValidator = [

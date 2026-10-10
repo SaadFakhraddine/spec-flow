@@ -15,6 +15,7 @@ import {
   linkTaskValidator,
   listSpecValidator,
   specIdValidator,
+  unlinkTaskValidator,
   updateSpecValidator,
 } from '../validators/specValidators'
 
@@ -41,6 +42,12 @@ specRouter.post('/:id/archive', requireAdmin, validate(specIdValidator), specCon
 specRouter.post('/:id/unarchive', requireAdmin, validate(specIdValidator), specController.unarchive)
 specRouter.delete('/:id', requireAdmin, validate(specIdValidator), specController.remove)
 specRouter.post('/:id/tasks', requireAdmin, validate(linkTaskValidator), specController.linkTask)
+specRouter.delete(
+  '/:id/tasks/:taskId',
+  requireAdmin,
+  validate(unlinkTaskValidator),
+  specController.unlinkTask,
+)
 specRouter.get(
   '/:id/comments',
   requireAuth,

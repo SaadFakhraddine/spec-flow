@@ -36,6 +36,39 @@ describe('spec and dashboard routes', () => {
     const listed = await developer.agent.get('/specs').set('Authorization', `Bearer ${developer.token}`)
     expect(listed.body.total).toBe(1)
     expect(listed.body.data[0].taskCount).toBe(1)
+    expect(listed.body.data[0].tasksDone).toBe(0)
+
+    const doneTask = await admin.agent
+      .post('/tasks')
+      .set('Authorization', `Bearer ${admin.token}`)
+      .send({ title: 'Done link', status: 'done' })
+    await admin.agent
+      .post(`/specs/${specId}/tasks`)
+      .set('Authorization', `Bearer ${admin.token}`)
+      .send({ taskId: doneTask.body.data.id })
+    const withDone = await admin.agent.get('/specs').set('Authorization', `Bearer ${admin.token}`)
+    expect(withDone.body.data[0].taskCount).toBe(2)
+    expect(withDone.body.data[0].tasksDone).toBe(1)
+
+    const unlinked = await admin.agent
+      .delete(`/specs/${specId}/tasks/${task.body.data.id}`)
+      .set('Authorization', `Bearer ${admin.token}`)
+    expect(unlinked.status).toBe(200)
+    expect(unlinked.body.data.taskCount).toBe(1)
+
+    const empty = await admin.agent
+      .post('/specs')
+      .set('Authorization', `Bearer ${admin.token}`)
+      .send({ ...specBody, title: 'Needs tasks spec' })
+    const needsTasks = await admin.agent
+      .get('/specs?needsTasks=true')
+      .set('Authorization', `Bearer ${admin.token}`)
+    expect(needsTasks.body.data.some((row: { id: string }) => row.id === empty.body.data.id)).toBe(
+      true,
+    )
+    expect(needsTasks.body.data.every((row: { taskCount: number }) => row.taskCount === 0)).toBe(
+      true,
+    )
   })
 
   it('rejects an empty spec and reports dashboard counts', async () => {
