@@ -38,12 +38,14 @@ The UI is at http://localhost:5173 and the API at http://localhost:4000.
 
 ## Demo accounts
 
-Seeded by `npm run seed` in `specflow-backend`.
+Seeded by `npm run seed` in `specflow-backend` (set `SEED_FORCE=true` to replace existing demo data).
 
-| Role | Email | Password |
-| --- | --- | --- |
-| Admin | admin@specflow.dev | Admin1234! |
-| Developer | dev@specflow.dev | Dev12345! |
+| Role | Email | Password | Notes |
+| --- | --- | --- | --- |
+| Admin | admin@specflow.dev | Admin1234! | Alex Rivera — list default, teal accent |
+| Developer | dev@specflow.dev | Dev12345! | Jordan Lee — board default, dark/amber |
+
+The seed fills specs (including approved + archived), tasks across every board column with due dates / blockers / checklists, comments with mentions, notifications, activity, revisions, and saved filters.
 
 Public registration always creates a developer. The admin account comes from the seed.
 
