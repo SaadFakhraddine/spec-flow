@@ -14,7 +14,15 @@ describe('route guard', () => {
   it('sends guests to login and signed-in users away from it', () => {
     expect(decideRedirect({ name: 'tasks' }, { isAuthenticated: false })).toBe('/login')
     expect(decideRedirect({ name: 'login', public: true }, { isAuthenticated: true, role: 'developer' })).toBe('/dashboard')
-    expect(decideRedirect({ name: 'spec-new', admin: true }, { isAuthenticated: true, role: 'developer' })).toBe('/dashboard')
+    expect(
+      decideRedirect(
+        { name: 'login', public: true },
+        { isAuthenticated: true, role: 'developer', landingPage: 'my-work' },
+      ),
+    ).toBe('/my-work')
+    expect(decideRedirect({ name: 'spec-new', admin: true }, { isAuthenticated: true, role: 'developer' })).toBe(
+      '/dashboard',
+    )
   })
 
   it('routes unknown paths to the 404 view', async () => {

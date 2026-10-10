@@ -16,7 +16,11 @@ export const SEED_ACCOUNTS = [
         mentionCreated: true,
         taskStatus: true,
       },
-      defaults: { tasksView: 'list' as const },
+      defaults: {
+        tasksView: 'list' as const,
+        landingPage: 'dashboard' as const,
+        tasksScope: 'all' as const,
+      },
     },
   },
   {
@@ -34,7 +38,11 @@ export const SEED_ACCOUNTS = [
         mentionCreated: true,
         taskStatus: false,
       },
-      defaults: { tasksView: 'board' as const },
+      defaults: {
+        tasksView: 'board' as const,
+        landingPage: 'my-work' as const,
+        tasksScope: 'mine' as const,
+      },
     },
   },
 ]

@@ -14,6 +14,12 @@ export const ACCENT_PREFS: AccentPref[] = ['teal', 'amber', 'slate']
 export const DENSITY_PREFS: DensityPref[] = ['comfortable', 'compact']
 
 export type TasksViewPref = 'list' | 'board'
+export type LandingPagePref = 'dashboard' | 'my-work' | 'tasks'
+export type TasksScopePref = 'all' | 'mine'
+
+export const TASKS_VIEW_PREFS: TasksViewPref[] = ['list', 'board']
+export const LANDING_PAGE_PREFS: LandingPagePref[] = ['dashboard', 'my-work', 'tasks']
+export const TASKS_SCOPE_PREFS: TasksScopePref[] = ['all', 'mine']
 
 export interface NotificationPreferences {
   taskAssigned: boolean
@@ -24,6 +30,8 @@ export interface NotificationPreferences {
 
 export interface DefaultPreferences {
   tasksView: TasksViewPref
+  landingPage: LandingPagePref
+  tasksScope: TasksScopePref
 }
 
 export interface UserPreferences {
@@ -49,7 +57,7 @@ export const DEFAULT_PREFERENCES: UserPreferences = {
   accent: 'teal',
   density: 'comfortable',
   notifications: { ...DEFAULT_NOTIFICATION_PREFS },
-  defaults: { tasksView: 'list' },
+  defaults: { tasksView: 'list', landingPage: 'dashboard', tasksScope: 'all' },
 }
 
 export interface Actor {

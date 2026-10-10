@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { landingPath } from '@/utils/landing'
 import { decideRedirect, guardInput } from './guard'
 import CreateSpecView from '@/views/CreateSpecView.vue'
 import DashboardView from '@/views/DashboardView.vue'
@@ -14,7 +15,13 @@ import TasksView from '@/views/TasksView.vue'
 
 export const routes = [
   { path: '/login', name: 'login', component: LoginView, meta: { public: true, blank: true } },
-  { path: '/', redirect: '/dashboard' },
+  {
+    path: '/',
+    redirect: () => {
+      const auth = useAuthStore()
+      return landingPath(auth.user?.preferences?.defaults?.landingPage)
+    },
+  },
   { path: '/dashboard', name: 'dashboard', component: DashboardView },
   { path: '/my-work', name: 'my-work', component: MyWorkView },
   { path: '/tasks', name: 'tasks', component: TasksView },
@@ -35,5 +42,9 @@ export const router = createRouter({
 router.beforeEach(async (to) => {
   const auth = useAuthStore()
   if (!auth.initialized) await auth.bootstrap()
-  return decideRedirect(guardInput(to), { isAuthenticated: auth.isAuthenticated, role: auth.user?.role })
+  return decideRedirect(guardInput(to), {
+    isAuthenticated: auth.isAuthenticated,
+    role: auth.user?.role,
+    landingPage: auth.user?.preferences?.defaults?.landingPage,
+  })
 })

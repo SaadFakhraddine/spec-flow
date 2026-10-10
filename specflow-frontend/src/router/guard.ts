@@ -1,5 +1,6 @@
 import type { RouteLocationNormalized } from 'vue-router'
-import type { Role } from '@/types'
+import type { LandingPagePref, Role } from '@/types'
+import { landingPath } from '@/utils/landing'
 
 interface GuardInput {
   name: string
@@ -7,13 +8,16 @@ interface GuardInput {
   admin?: boolean
 }
 
-export function decideRedirect(to: GuardInput, auth: { isAuthenticated: boolean; role?: Role }): string | true {
+export function decideRedirect(
+  to: GuardInput,
+  auth: { isAuthenticated: boolean; role?: Role; landingPage?: LandingPagePref },
+): string | true {
   if (to.public) {
-    if (to.name === 'login' && auth.isAuthenticated) return '/dashboard'
+    if (to.name === 'login' && auth.isAuthenticated) return landingPath(auth.landingPage)
     return true
   }
   if (!auth.isAuthenticated) return '/login'
-  if (to.admin && auth.role !== 'admin') return '/dashboard'
+  if (to.admin && auth.role !== 'admin') return landingPath(auth.landingPage)
   return true
 }
 

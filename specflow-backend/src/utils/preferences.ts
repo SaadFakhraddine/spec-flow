@@ -2,7 +2,9 @@ import type {
   AccentPref,
   DefaultPreferences,
   DensityPref,
+  LandingPagePref,
   NotificationPreferences,
+  TasksScopePref,
   TasksViewPref,
   ThemePref,
   UserPreferences,
@@ -11,6 +13,9 @@ import {
   ACCENT_PREFS,
   DEFAULT_PREFERENCES,
   DENSITY_PREFS,
+  LANDING_PAGE_PREFS,
+  TASKS_SCOPE_PREFS,
+  TASKS_VIEW_PREFS,
   THEME_PREFS,
 } from '../types/api.types'
 
@@ -45,13 +50,22 @@ function readNotifications(value: unknown): NotificationPreferences {
 
 function readDefaults(value: unknown): DefaultPreferences {
   const src = toPlain(value)
-  const tasksView = src?.tasksView
-  const valid: TasksViewPref[] = ['list', 'board']
   return {
-    tasksView:
-      typeof tasksView === 'string' && valid.includes(tasksView as TasksViewPref)
-        ? (tasksView as TasksViewPref)
-        : DEFAULT_PREFERENCES.defaults.tasksView,
+    tasksView: readEnum<TasksViewPref>(
+      src?.tasksView,
+      TASKS_VIEW_PREFS,
+      DEFAULT_PREFERENCES.defaults.tasksView,
+    ),
+    landingPage: readEnum<LandingPagePref>(
+      src?.landingPage,
+      LANDING_PAGE_PREFS,
+      DEFAULT_PREFERENCES.defaults.landingPage,
+    ),
+    tasksScope: readEnum<TasksScopePref>(
+      src?.tasksScope,
+      TASKS_SCOPE_PREFS,
+      DEFAULT_PREFERENCES.defaults.tasksScope,
+    ),
   }
 }
 

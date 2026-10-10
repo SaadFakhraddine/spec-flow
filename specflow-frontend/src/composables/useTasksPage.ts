@@ -161,6 +161,14 @@ export function useTasksPage() {
     if (typeof route.query.due === 'string') filters.value.due = route.query.due
     if (typeof route.query.blocked === 'string') filters.value.blocked = route.query.blocked
     if (typeof route.query.q === 'string') filters.value.q = route.query.q
+    if (typeof route.query.assignedTo === 'string') {
+      filters.value.assignedTo = route.query.assignedTo
+    } else if (
+      user.value?.preferences?.defaults?.tasksScope === 'mine' &&
+      user.value.id
+    ) {
+      filters.value.assignedTo = user.value.id
+    }
     if (!route.query.view && preferredView.value === 'board') {
       void router.replace({ query: { ...route.query, view: 'board' } })
     }

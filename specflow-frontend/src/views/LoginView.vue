@@ -2,12 +2,13 @@
 import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
+import { landingPath } from '@/utils/landing'
 import { fieldErrors, loginSchema, registerSchema } from '@/utils/validators'
 import Button from '@/components/ui/Button.vue'
 import Input from '@/components/ui/Input.vue'
 
 const router = useRouter()
-const { login, register, loading, error } = useAuth()
+const { login, register, loading, error, user } = useAuth()
 const mode = ref<'login' | 'register'>('login')
 const form = reactive({ name: '', email: '', password: '' })
 const errors = ref<Record<string, string>>({})
@@ -24,7 +25,7 @@ async function onSubmit(): Promise<void> {
   const ok = mode.value === 'login'
     ? await login(form.email, form.password)
     : await register(form.name, form.email, form.password)
-  if (ok) await router.push('/dashboard')
+  if (ok) await router.push(landingPath(user.value?.preferences?.defaults?.landingPage))
 }
 </script>
 

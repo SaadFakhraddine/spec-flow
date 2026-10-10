@@ -25,7 +25,11 @@ const user = {
       mentionCreated: true,
       taskStatus: true,
     },
-    defaults: { tasksView: 'list' as const },
+    defaults: {
+      tasksView: 'list' as const,
+      landingPage: 'dashboard' as const,
+      tasksScope: 'all' as const,
+    },
   },
 }
 

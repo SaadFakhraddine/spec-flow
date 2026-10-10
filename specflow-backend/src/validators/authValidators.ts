@@ -29,6 +29,8 @@ export const preferencesValidator = [
   body('notifications.taskStatus').optional().isBoolean(),
   body('defaults').optional().isObject(),
   body('defaults.tasksView').optional().isIn(['list', 'board']),
+  body('defaults.landingPage').optional().isIn(['dashboard', 'my-work', 'tasks']),
+  body('defaults.tasksScope').optional().isIn(['all', 'mine']),
 ]
 
 export const profileValidator = [

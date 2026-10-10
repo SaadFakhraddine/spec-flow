@@ -15,7 +15,7 @@ const titles: Record<string, { title: string; subtitle: string }> = {
   appearance: { title: 'Appearance', subtitle: 'Theme, accent, and density' },
   profile: { title: 'Profile', subtitle: 'How you show up on SpecFlow work' },
   notifications: { title: 'Notifications', subtitle: 'Choose which alerts reach you' },
-  defaults: { title: 'Defaults', subtitle: 'How Tasks opens for you' },
+  defaults: { title: 'Defaults', subtitle: 'Landing page, Tasks view, and scope' },
 }
 
 const meta = computed(() => titles[section.value] ?? titles.appearance)

@@ -34,6 +34,12 @@ const notificationPrefsSchema = new Schema(
 const defaultPrefsSchema = new Schema(
   {
     tasksView: { type: String, enum: ['list', 'board'], default: 'list' },
+    landingPage: {
+      type: String,
+      enum: ['dashboard', 'my-work', 'tasks'],
+      default: 'dashboard',
+    },
+    tasksScope: { type: String, enum: ['all', 'mine'], default: 'all' },
   },
   { _id: false },
 )

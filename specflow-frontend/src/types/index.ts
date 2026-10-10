@@ -6,6 +6,8 @@ export type ThemePref = 'light' | 'dark' | 'system'
 export type AccentPref = 'teal' | 'amber' | 'slate'
 export type DensityPref = 'comfortable' | 'compact'
 export type TasksViewPref = 'list' | 'board'
+export type LandingPagePref = 'dashboard' | 'my-work' | 'tasks'
+export type TasksScopePref = 'all' | 'mine'
 
 export interface AppearancePreferences {
   theme: ThemePref
@@ -22,6 +24,8 @@ export interface NotificationPreferences {
 
 export interface DefaultPreferences {
   tasksView: TasksViewPref
+  landingPage: LandingPagePref
+  tasksScope: TasksScopePref
 }
 
 export interface UserPreferences extends AppearancePreferences {
@@ -41,7 +45,7 @@ export const DEFAULT_USER_PREFERENCES: UserPreferences = {
   accent: 'teal',
   density: 'comfortable',
   notifications: { ...DEFAULT_NOTIFICATION_PREFS },
-  defaults: { tasksView: 'list' },
+  defaults: { tasksView: 'list', landingPage: 'dashboard', tasksScope: 'all' },
 }
 
 export interface User {

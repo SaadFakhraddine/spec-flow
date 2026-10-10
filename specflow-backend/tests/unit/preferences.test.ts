@@ -12,6 +12,8 @@ describe('preferences', () => {
     expect(prefs.notifications.taskAssigned).toBe(false)
     expect(prefs.notifications.commentCreated).toBe(true)
     expect(prefs.defaults.tasksView).toBe('board')
+    expect(prefs.defaults.landingPage).toBe('dashboard')
+    expect(prefs.defaults.tasksScope).toBe('all')
   })
 
   it('reads nested prefs via toObject (mongoose-like)', () => {
@@ -47,5 +49,12 @@ describe('preferences', () => {
     expect(next.notifications.mentionCreated).toBe(false)
     expect(next.notifications.taskAssigned).toBe(true)
     expect(next.defaults.tasksView).toBe('board')
+    expect(next.defaults.landingPage).toBe('dashboard')
+    const withLanding = mergePreferences(next, {
+      defaults: { landingPage: 'my-work', tasksScope: 'mine' },
+    })
+    expect(withLanding.defaults.landingPage).toBe('my-work')
+    expect(withLanding.defaults.tasksScope).toBe('mine')
+    expect(withLanding.defaults.tasksView).toBe('board')
   })
 })

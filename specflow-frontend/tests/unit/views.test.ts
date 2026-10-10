@@ -95,7 +95,7 @@ async function mountTasks() {
         mentionCreated: true,
         taskStatus: true,
       },
-      defaults: { tasksView: 'list' },
+      defaults: { tasksView: 'list', landingPage: 'dashboard', tasksScope: 'all' },
     },
   }
   return mount(TasksView, { global: { plugins: [pinia, router] } })

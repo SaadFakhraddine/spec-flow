@@ -8,7 +8,7 @@ const sections = [
   { id: 'appearance', label: 'Appearance', hint: 'Theme and density' },
   { id: 'profile', label: 'Profile', hint: 'Your work identity' },
   { id: 'notifications', label: 'Notifications', hint: 'What alerts you get' },
-  { id: 'defaults', label: 'Defaults', hint: 'How Tasks opens' },
+  { id: 'defaults', label: 'Defaults', hint: 'Landing, view, and scope' },
 ] as const
 
 const active = computed(() => String(route.params.section || 'appearance'))
