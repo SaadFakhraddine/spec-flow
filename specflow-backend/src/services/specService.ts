@@ -88,10 +88,32 @@ export async function getSpecById(id: string): Promise<SpecDto> {
   return toDto(spec, spec.tasks)
 }
 
+function pickSpecFields(input: Partial<SpecInput>): Partial<SpecInput> {
+  const fields: Partial<SpecInput> = {}
+  if (input.title !== undefined) fields.title = input.title
+  if (input.businessGoal !== undefined) fields.businessGoal = input.businessGoal
+  if (input.technicalApproach !== undefined) fields.technicalApproach = input.technicalApproach
+  if (input.apiDesign !== undefined) fields.apiDesign = input.apiDesign
+  if (input.edgeCases !== undefined) fields.edgeCases = input.edgeCases
+  if (input.acceptanceCriteria !== undefined) fields.acceptanceCriteria = input.acceptanceCriteria
+  if (input.regressionRisks !== undefined) fields.regressionRisks = input.regressionRisks
+  if (input.status !== undefined) fields.status = input.status
+  return fields
+}
+
 export async function createSpec(input: SpecInput, actor: Actor): Promise<SpecDto> {
   assertAdmin(actor)
+  const fields = pickSpecFields(input)
   const spec = await Spec.create({
-    ...input,
+    title: fields.title,
+    businessGoal: fields.businessGoal,
+    technicalApproach: fields.technicalApproach,
+    apiDesign: fields.apiDesign ?? '',
+    edgeCases: fields.edgeCases ?? [],
+    acceptanceCriteria: fields.acceptanceCriteria,
+    regressionRisks: fields.regressionRisks ?? '',
+    /** Always start as draft; approval goes through updateSpec transitions. */
+    status: 'draft',
     createdBy: actor.id,
     tasks: [],
     archivedAt: null,
@@ -143,26 +165,27 @@ export async function updateSpec(
   const spec = await Spec.findById(id)
   if (!spec) throw new AppError('Spec not found', 404)
   const previousStatus = spec.status as SpecStatus
-  if (input.status && input.status !== previousStatus) {
+  const fields = pickSpecFields(input)
+  if (fields.status && fields.status !== previousStatus) {
     try {
-      assertSpecTransition(previousStatus, input.status)
+      assertSpecTransition(previousStatus, fields.status)
     } catch (error) {
       throw new AppError(error instanceof Error ? error.message : 'Invalid status transition', 400)
     }
   }
-  spec.set(input)
-  if (input.status === 'approved' && previousStatus !== 'approved') {
+  spec.set(fields)
+  if (fields.status === 'approved' && previousStatus !== 'approved') {
     spec.approvedAt = new Date()
     spec.approvedBy = actor.id as unknown as typeof spec.approvedBy
     await snapshotRevision(spec, actor.id)
   }
   await spec.save()
-  if (input.status && input.status !== previousStatus) {
+  if (fields.status && fields.status !== previousStatus) {
     await recordActivity({
       actorId: actor.id,
       type: 'spec.status',
       specId: spec.id,
-      meta: { from: previousStatus, to: input.status, title: spec.title },
+      meta: { from: previousStatus, to: fields.status, title: spec.title },
     })
   }
   return getSpecById(spec.id)

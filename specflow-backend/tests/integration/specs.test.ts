@@ -43,7 +43,14 @@ describe('spec and dashboard routes', () => {
     const invalid = await admin.agent.post('/specs').set('Authorization', `Bearer ${admin.token}`).send({ title: 'Only a title' })
     expect(invalid.status).toBe(400)
 
-    await admin.agent.post('/specs').set('Authorization', `Bearer ${admin.token}`).send(specBody)
+    const created = await admin.agent.post('/specs').set('Authorization', `Bearer ${admin.token}`).send(specBody)
+    expect(created.body.data.status).toBe('draft')
+    const specId = created.body.data.id as string
+    await admin.agent.patch(`/specs/${specId}`).set('Authorization', `Bearer ${admin.token}`).send({ status: 'ready' })
+    await admin.agent
+      .patch(`/specs/${specId}`)
+      .set('Authorization', `Bearer ${admin.token}`)
+      .send({ status: 'in-review' })
     await admin.agent.post('/tasks').set('Authorization', `Bearer ${admin.token}`).send({ title: 'Open work', status: 'backlog' })
     await admin.agent.post('/tasks').set('Authorization', `Bearer ${admin.token}`).send({ title: 'Finished', status: 'done' })
 
