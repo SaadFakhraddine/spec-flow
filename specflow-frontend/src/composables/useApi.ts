@@ -83,13 +83,21 @@ apiClient.interceptors.response.use(
   },
 )
 
+let refreshInFlight: Promise<string> | null = null
+
 export async function requestRefresh(): Promise<string> {
-  const response = await axios.post<{ data: { accessToken: string } }>(
-    `${import.meta.env.VITE_API_URL}/auth/refresh`,
-    {},
-    { withCredentials: true, timeout: 10000 },
-  )
-  return response.data.data.accessToken
+  if (refreshInFlight) return refreshInFlight
+  refreshInFlight = axios
+    .post<{ data: { accessToken: string } }>(
+      `${import.meta.env.VITE_API_URL}/auth/refresh`,
+      {},
+      { withCredentials: true, timeout: 10000 },
+    )
+    .then((response) => response.data.data.accessToken)
+    .finally(() => {
+      refreshInFlight = null
+    })
+  return refreshInFlight
 }
 
 export default apiClient

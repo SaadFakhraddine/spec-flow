@@ -72,7 +72,7 @@ Images land in `specflow-frontend/portfolio-shots/` (e.g. `01-login.png`). Copy 
 1. Create a MongoDB Atlas free cluster and copy the connection string.
 2. Deploy `specflow-backend` to Railway (or Render). Build command `npm run build`, start command `npm start`. Set `PORT`, `MONGODB_URI`, `JWT_SECRET`, `JWT_REFRESH_SECRET`, `FRONTEND_URL`, and `NODE_ENV=production`.
 3. Deploy `specflow-frontend` to Vercel. Set `VITE_API_URL` to `/api` so the browser talks to the same origin; `vercel.json` proxies `/api/*` to the Render/Railway API (update that destination if your API host changes). The SPA fallback rewrite stays in place.
-4. Set `FRONTEND_URL` on the API to the Vercel origin. Refresh tokens use an httpOnly cookie (`SameSite=None; Secure; Partitioned` in production). Prefer the `/api` proxy so the cookie is first-party; calling the API host directly from the browser is fragile as third-party cookies get blocked.
+4. Set `FRONTEND_URL` on the API to the Vercel origin. With the `/api` proxy, also set `REFRESH_COOKIE_FIRST_PARTY=true` on the API so the refresh cookie is `SameSite=Lax` (first-party). Without the proxy, omit that flag and the API uses `SameSite=None; Secure; Partitioned` for cross-site cookies.
 5. Run the seed against the Atlas database, or create the two demo users there.
 6. Public self-registration is **off** when `NODE_ENV=production` unless you set `ALLOW_PUBLIC_REGISTER=true`. Prefer seeding or inviting users in production.
 

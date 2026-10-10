@@ -22,9 +22,11 @@ watch(
 
 <template>
   <ToastContainer />
-  <SearchPalette v-if="!route.meta.blank" />
-  <AppLayout v-if="!route.meta.blank">
-    <RouterView />
-  </AppLayout>
-  <RouterView v-else />
+  <template v-if="auth.initialized">
+    <SearchPalette v-if="!route.meta.blank" />
+    <AppLayout v-if="!route.meta.blank">
+      <RouterView />
+    </AppLayout>
+    <RouterView v-else />
+  </template>
 </template>

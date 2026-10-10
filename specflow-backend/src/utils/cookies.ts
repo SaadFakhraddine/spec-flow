@@ -6,18 +6,38 @@ const COOKIE = 'refreshToken'
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000
 
 /**
- * Cross-site (Vercel UI → Render API) needs SameSite=None; Secure.
- * Partitioned (CHIPS) keeps the cookie usable as browsers block unpartitioned third-party cookies.
+ * Prefer first-party cookies when the SPA proxies `/api` on the same origin (Vercel rewrite).
+ * Set REFRESH_COOKIE_FIRST_PARTY=true on the API in that setup.
+ * Otherwise use SameSite=None; Secure; Partitioned for direct cross-site calls.
  */
 function serializeRefreshCookie(token: string, maxAgeSeconds: number): string {
   const production = env.NODE_ENV === 'production'
+  const firstParty = env.REFRESH_COOKIE_FIRST_PARTY
+  if (!production) {
+    return serialize(COOKIE, token, {
+      httpOnly: true,
+      secure: false,
+      sameSite: 'lax',
+      path: '/',
+      maxAge: maxAgeSeconds,
+    })
+  }
+  if (firstParty) {
+    return serialize(COOKIE, token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'lax',
+      path: '/',
+      maxAge: maxAgeSeconds,
+    })
+  }
   return serialize(COOKIE, token, {
     httpOnly: true,
-    secure: production,
-    sameSite: production ? 'none' : 'lax',
+    secure: true,
+    sameSite: 'none',
     path: '/',
     maxAge: maxAgeSeconds,
-    ...(production ? { partitioned: true } : {}),
+    partitioned: true,
   })
 }
 

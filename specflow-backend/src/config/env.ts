@@ -62,6 +62,11 @@ function loadEnv() {
     JWT_REFRESH_SECRET: readSecret('JWT_REFRESH_SECRET'),
     FRONTEND_URL: readFrontendUrl(),
     NODE_ENV: nodeEnv,
+    /**
+     * When true, refresh cookie uses SameSite=Lax (for SPA same-origin `/api` proxy).
+     * When false, uses SameSite=None; Partitioned for direct cross-site browser calls.
+     */
+    REFRESH_COOKIE_FIRST_PARTY: readBool('REFRESH_COOKIE_FIRST_PARTY', false),
     /** When false, POST /auth/register returns 403. Defaults off in production. */
     ALLOW_PUBLIC_REGISTER: readBool('ALLOW_PUBLIC_REGISTER', nodeEnv !== 'production'),
   }
