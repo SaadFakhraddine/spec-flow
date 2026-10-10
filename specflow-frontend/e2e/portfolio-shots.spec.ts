@@ -17,8 +17,14 @@ async function shot(page: Page, name: string): Promise<void> {
   })
 }
 
-async function loginAsAdmin(page: Page): Promise<void> {
+async function loginAsAdmin(page: Page, opts?: { fresh?: boolean }): Promise<void> {
+  if (opts?.fresh) await page.context().clearCookies()
   await page.goto('/login')
+  // Authenticated users are redirected away from /login.
+  if (!/\/login\/?$/.test(page.url())) {
+    await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible({ timeout: 15_000 })
+    return
+  }
   await page.getByLabel('Email').fill('admin@specflow.dev')
   await page.getByLabel('Password').fill('Admin1234!')
   await page.getByRole('button', { name: 'Sign in' }).click()
@@ -70,40 +76,53 @@ test.describe('portfolio screenshots', () => {
     await expect(page.locator('#comment-body')).toBeVisible({ timeout: 15_000 })
     await shot(page, '08-task-detail')
 
-    await page.goto('/specs')
+    await page.goto('/specs?view=pipeline')
     await expect(page.getByRole('heading', { name: 'Specs' })).toBeVisible()
-    await shot(page, '09-specs-list')
+    await expect(page.getByRole('heading', { name: 'Draft' })).toBeVisible({ timeout: 15_000 })
+    await shot(page, '09-specs-pipeline')
 
-    await page.goto('/specs/new')
-    await expect(page).toHaveURL(/specs\/new/)
-    await shot(page, '10-specs-new')
-
-    await page.goto('/specs')
+    await page.goto('/specs?view=table')
     await expect(page.getByRole('heading', { name: 'Specs' })).toBeVisible()
     await expect(page.locator('table tbody tr').first()).toBeVisible({ timeout: 15_000 })
+    await shot(page, '10-specs-table')
+
     await page.locator('table tbody tr').first().locator('td').first().click()
     await expect(page).toHaveURL(/\/specs\/[a-f0-9]+/i, { timeout: 15_000 })
+    await expect(page.getByRole('heading', { name: 'Linked tasks' })).toBeVisible({
+      timeout: 15_000,
+    })
     await shot(page, '11-spec-detail')
 
+    await page.goto('/specs/new')
+    await expect(page.getByRole('heading', { name: 'New spec' })).toBeVisible({ timeout: 15_000 })
+    await expect(page.getByLabel('Title')).toBeVisible()
+    await shot(page, '12-specs-new')
+
+    // Fresh session before the settings sweep — full reloads can drop auth in e2e.
+    await loginAsAdmin(page, { fresh: true })
+
     const settings: [string, string][] = [
-      ['12-settings-appearance', 'appearance'],
-      ['13-settings-profile', 'profile'],
-      ['14-settings-notifications', 'notifications'],
-      ['15-settings-defaults', 'defaults'],
+      ['13-settings-appearance', 'appearance'],
+      ['14-settings-profile', 'profile'],
+      ['15-settings-notifications', 'notifications'],
+      ['16-settings-defaults', 'defaults'],
     ]
     for (const [file, section] of settings) {
       await page.goto(`/settings/${section}`)
-      await expect(page.getByRole('heading', { name: 'Settings' })).toBeVisible()
+      await expect(page.getByRole('heading', { name: 'Settings' })).toBeVisible({
+        timeout: 15_000,
+      })
       await shot(page, file)
     }
 
     await page.goto('/dashboard')
+    await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible()
     await page.getByRole('button', { name: 'Notifications' }).click()
     await expect(page.getByRole('dialog', { name: 'Notifications' })).toBeVisible()
-    await shot(page, '16-notifications-panel')
+    await shot(page, '17-notifications-panel')
 
     await page.goto('/this-route-does-not-exist')
     await expect(page.getByRole('heading', { name: 'This page does not exist' })).toBeVisible()
-    await shot(page, '17-not-found')
+    await shot(page, '18-not-found')
   })
 })

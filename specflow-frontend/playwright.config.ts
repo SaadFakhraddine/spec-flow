@@ -23,7 +23,9 @@ export default defineConfig({
         timeout: 120_000,
         env: {
           ...process.env,
-          VITE_API_URL: process.env.VITE_API_URL ?? 'http://127.0.0.1:4000',
+          // First-party /api proxy so httpOnly refresh cookies survive page.goto reloads.
+          VITE_API_URL: process.env.VITE_API_URL ?? '/api',
+          VITE_PROXY_TARGET: process.env.VITE_PROXY_TARGET ?? 'http://127.0.0.1:4000',
         },
       },
 })
