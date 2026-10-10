@@ -23,4 +23,12 @@ describe('task patches', () => {
     expect(patch.dueDate).toBeNull()
     expect(patch.priority).toBe('high')
   })
+
+  it('rejects unsafe external URLs', () => {
+    expect(() => developerPatch({ status: 'done', externalUrl: 'javascript:alert(1)' })).toThrow(AppError)
+    expect(developerPatch({ status: 'done', externalUrl: 'https://example.com/doc' })).toEqual({
+      status: 'done',
+      externalUrl: 'https://example.com/doc',
+    })
+  })
 })

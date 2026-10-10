@@ -2,6 +2,7 @@ import type { ChecklistItemDto, TaskInput, TaskPriority, TaskStatus } from '../t
 import { AppError } from '../utils/AppError'
 import { normalizeChecklist } from '../utils/checklist'
 import { isTaskPriority, isTaskStatus } from '../utils/mappers'
+import { sanitizeExternalUrl } from '../utils/url'
 
 function applyWorkflowFields(input: TaskInput, patch: Record<string, unknown>): void {
   if (input.blockedReason !== undefined) {
@@ -14,7 +15,7 @@ function applyWorkflowFields(input: TaskInput, patch: Record<string, unknown>): 
     patch.checklist = normalizeChecklist(input.checklist as ChecklistItemDto[])
   }
   if (input.externalUrl !== undefined) {
-    patch.externalUrl = input.externalUrl ? String(input.externalUrl).trim() : ''
+    patch.externalUrl = sanitizeExternalUrl(input.externalUrl)
   }
 }
 
