@@ -6,6 +6,7 @@ export function useSpecs() {
   return {
     ...storeToRefs(store),
     fetchSpecs: store.fetchSpecs,
+    fetchPipeline: store.fetchPipeline,
     fetchSpecById: store.fetchSpecById,
     fetchRevisions: store.fetchRevisions,
     createSpec: store.createSpec,
@@ -14,6 +15,7 @@ export function useSpecs() {
     unarchiveSpec: store.unarchiveSpec,
     deleteSpec: store.deleteSpec,
     addTaskToSpec: store.addTaskToSpec,
+    unlinkTaskFromSpec: store.unlinkTaskFromSpec,
     exportCsv: store.exportCsv,
   }
 }

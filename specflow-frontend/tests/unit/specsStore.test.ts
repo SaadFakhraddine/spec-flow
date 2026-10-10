@@ -26,6 +26,7 @@ const spec = {
   createdBy: { id: '1', name: 'Ada', email: 'ada@specflow.dev' },
   tasks: [],
   taskCount: 0,
+  tasksDone: 0,
   createdAt: '2026-09-01T00:00:00.000Z',
   updatedAt: '2026-09-01T00:00:00.000Z',
 } as Spec

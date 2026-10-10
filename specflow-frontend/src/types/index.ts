@@ -131,6 +131,7 @@ export interface Spec {
   createdBy: UserRef
   tasks: Task[]
   taskCount: number
+  tasksDone: number
   createdAt: string
   updatedAt: string
 }
@@ -212,6 +213,7 @@ export interface SpecFilters {
   q?: string
   includeArchived?: boolean
   archivedOnly?: boolean
+  needsTasks?: boolean
 }
 
 export interface TaskInput {

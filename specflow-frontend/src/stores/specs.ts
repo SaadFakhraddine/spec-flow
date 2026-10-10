@@ -12,12 +12,15 @@ import type {
 import { PAGE_LIMIT } from '@/types'
 import { errorMessage } from '@/utils/errors'
 
+const PIPELINE_LIMIT = 50
+
 function cleanSpecFilters(filters: SpecFilters): Record<string, string> {
   const params: Record<string, string> = {}
   if (filters.status) params.status = filters.status
   if (filters.q) params.q = filters.q
   if (filters.includeArchived) params.includeArchived = 'true'
   if (filters.archivedOnly) params.archivedOnly = 'true'
+  if (filters.needsTasks) params.needsTasks = 'true'
   return params
 }
 
@@ -54,8 +57,18 @@ export const useSpecsStore = defineStore('specs', () => {
     })
   }
 
+  async function fetchPipeline(filters: SpecFilters = {}): Promise<void> {
+    currentPage.value = 1
+    await run(async () => {
+      const response = await apiClient.get<PaginatedResponse<Spec>>('/specs', {
+        params: { ...cleanSpecFilters(filters), page: 1, limit: PIPELINE_LIMIT },
+      })
+      specs.value = response.data.data
+      total.value = response.data.total
+    })
+  }
+
   async function fetchSpecById(id: string): Promise<void> {
-    selectedSpec.value = null
     await run(async () => {
       const response = await apiClient.get<ApiResponse<Spec>>(`/specs/${id}`)
       selectedSpec.value = response.data.data
@@ -118,6 +131,14 @@ export const useSpecsStore = defineStore('specs', () => {
     })
   }
 
+  async function unlinkTaskFromSpec(specId: string, taskId: string): Promise<Spec | null> {
+    return run(async () => {
+      const response = await apiClient.delete<ApiResponse<Spec>>(`/specs/${specId}/tasks/${taskId}`)
+      selectedSpec.value = response.data.data
+      return response.data.data
+    })
+  }
+
   async function exportCsv(filters: SpecFilters = {}): Promise<Blob | null> {
     return run(async () => {
       const response = await apiClient.get('/specs/export.csv', {
@@ -137,6 +158,7 @@ export const useSpecsStore = defineStore('specs', () => {
     selectedSpec,
     revisions,
     fetchSpecs,
+    fetchPipeline,
     fetchSpecById,
     fetchRevisions,
     createSpec,
@@ -145,6 +167,7 @@ export const useSpecsStore = defineStore('specs', () => {
     unarchiveSpec,
     deleteSpec,
     addTaskToSpec,
+    unlinkTaskFromSpec,
     exportCsv,
   }
 })
